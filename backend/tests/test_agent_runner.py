@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -19,7 +19,7 @@ async def test_run_cycle_emits_agent_move_then_finding_when_node_selected():
     broadcaster = AsyncMock()
 
     async def fake_investigate(node, focus, definitions, dispatch, client=None):
-        return "Cost trending up 60%."
+        return "Cost trending up 60%.", []
 
     runner = AgentRunner(
         agent_id="cost",
@@ -45,7 +45,7 @@ async def test_run_cycle_emits_agent_move_then_finding_when_node_selected():
         "agent_id": "cost",
         "target_node_id": "ec2:i-1",
     }
-    assert broadcaster.broadcast.await_args_list[1].args[0] == result
+    assert broadcaster.broadcast.await_args_list[-1].args[0] == result
 
 
 @pytest.mark.anyio
@@ -78,7 +78,7 @@ async def test_run_forever_runs_the_requested_number_of_cycles():
     async def fake_investigate(node, focus, definitions, dispatch, client=None):
         nonlocal call_count
         call_count += 1
-        return "finding"
+        return "finding", []
 
     runner = AgentRunner(
         agent_id="cost",
@@ -95,3 +95,43 @@ async def test_run_forever_runs_the_requested_number_of_cycles():
     await runner.run_forever(iterations=2)
 
     assert call_count == 2
+
+
+@pytest.mark.anyio
+async def test_run_cycle_records_reasoning_and_broadcasts_action_proposed_before_finding():
+    store = FakeStore({"ec2:i-1": {"node_id": "ec2:i-1", "resource_type": "ec2"}})
+    broadcaster = AsyncMock()
+    action_store = MagicMock()
+    proposed_action = {"id": "action-1", "tool_name": "stop_ec2_instance"}
+
+    async def fake_investigate(node, focus, definitions, dispatch, client=None):
+        return "Proposed stopping idle instance.", [proposed_action]
+
+    runner = AgentRunner(
+        agent_id="cost",
+        store=store,
+        broadcaster=broadcaster,
+        select_node_fn=lambda nodes, history: "ec2:i-1",
+        tool_definitions=[],
+        tool_dispatch={},
+        investigation_focus="cost trends",
+        investigate_fn=fake_investigate,
+        action_tool_name="stop_ec2_instance",
+        action_store=action_store,
+    )
+
+    result = await runner.run_cycle()
+
+    action_store.set_reasoning.assert_called_once_with("action-1", "Proposed stopping idle instance.")
+
+    broadcast_types = [call.args[0]["type"] for call in broadcaster.broadcast.await_args_list]
+    assert broadcast_types == ["agent_move", "action_proposed", "finding"]
+
+    action_proposed_call = broadcaster.broadcast.await_args_list[1].args[0]
+    assert action_proposed_call == {
+        "type": "action_proposed",
+        "agent_id": "cost",
+        "node_id": "ec2:i-1",
+        "action_id": "action-1",
+    }
+    assert result["text"] == "Proposed stopping idle instance."
