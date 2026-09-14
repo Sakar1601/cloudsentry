@@ -13,6 +13,7 @@ PERFORMANCE_TOOL_NAMES = [
     "list_ec2_instances",
 ]
 SECURITY_TOOL_NAMES = ["get_iam_policy_for_role", "list_ec2_instances", "list_lambda_functions"]
+ACTION_TOOL_NAMES = ["stop_ec2_instance", "resize_ec2_instance", "tighten_iam_policy"]
 
 
 def _get_cloudwatch_metric_from_tool_call(
@@ -108,6 +109,54 @@ _ALL_TOOL_DEFINITIONS = {
             "required": ["role_name"],
         },
     },
+    "stop_ec2_instance": {
+        "name": "stop_ec2_instance",
+        "description": (
+            "Propose stopping an EC2 instance. This does not execute immediately — it creates "
+            "a pending action that requires human approval before AWS is actually called."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {"instance_id": {"type": "string"}},
+            "required": ["instance_id"],
+        },
+    },
+    "resize_ec2_instance": {
+        "name": "resize_ec2_instance",
+        "description": (
+            "Propose resizing an EC2 instance to a new instance type. This does not execute "
+            "immediately — it creates a pending action that requires human approval before AWS "
+            "is actually called."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "instance_id": {"type": "string"},
+                "new_instance_type": {"type": "string", "description": "e.g. t3.small"},
+            },
+            "required": ["instance_id", "new_instance_type"],
+        },
+    },
+    "tighten_iam_policy": {
+        "name": "tighten_iam_policy",
+        "description": (
+            "Propose replacing an IAM role's inline policy with a narrower policy document. "
+            "This does not execute immediately — it creates a pending action that requires "
+            "human approval before AWS is actually called."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "role_name": {"type": "string"},
+                "policy_name": {"type": "string"},
+                "new_policy_document": {
+                    "type": "object",
+                    "description": "The replacement IAM policy document",
+                },
+            },
+            "required": ["role_name", "policy_name", "new_policy_document"],
+        },
+    },
 }
 
 _ALL_TOOL_DISPATCH = {
@@ -122,5 +171,5 @@ _ALL_TOOL_DISPATCH = {
 
 def tool_subset(names: list[str]) -> tuple[list[dict], dict]:
     definitions = [_ALL_TOOL_DEFINITIONS[name] for name in names]
-    dispatch = {name: _ALL_TOOL_DISPATCH[name] for name in names}
+    dispatch = {name: _ALL_TOOL_DISPATCH[name] for name in names if name in _ALL_TOOL_DISPATCH}
     return definitions, dispatch
