@@ -1,8 +1,10 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 
+from app.actions.executor import execute_action
+from app.actions.store import ActionStore
 from app.agents.runner import AgentRunner
 from app.agents.selection import select_cost_node, select_performance_node, select_security_node
 from app.agents.tools import (
@@ -18,10 +20,15 @@ from app.graph.store import GraphStore
 graph_store = GraphStore()
 connection_manager = ConnectionManager()
 graph_poller = GraphPoller(store=graph_store, broadcaster=connection_manager)
+action_store = ActionStore(db_path="cloudsentry_actions.db")
 
-cost_tool_definitions, cost_tool_dispatch = tool_subset(COST_TOOL_NAMES)
-performance_tool_definitions, performance_tool_dispatch = tool_subset(PERFORMANCE_TOOL_NAMES)
-security_tool_definitions, security_tool_dispatch = tool_subset(SECURITY_TOOL_NAMES)
+cost_tool_definitions, cost_tool_dispatch = tool_subset(COST_TOOL_NAMES + ["stop_ec2_instance"])
+performance_tool_definitions, performance_tool_dispatch = tool_subset(
+    PERFORMANCE_TOOL_NAMES + ["resize_ec2_instance"]
+)
+security_tool_definitions, security_tool_dispatch = tool_subset(
+    SECURITY_TOOL_NAMES + ["tighten_iam_policy"]
+)
 
 cost_agent = AgentRunner(
     agent_id="cost",
@@ -31,6 +38,8 @@ cost_agent = AgentRunner(
     tool_definitions=cost_tool_definitions,
     tool_dispatch=cost_tool_dispatch,
     investigation_focus="cost trends",
+    action_tool_name="stop_ec2_instance",
+    action_store=action_store,
 )
 performance_agent = AgentRunner(
     agent_id="performance",
@@ -40,6 +49,8 @@ performance_agent = AgentRunner(
     tool_definitions=performance_tool_definitions,
     tool_dispatch=performance_tool_dispatch,
     investigation_focus="performance and latency issues",
+    action_tool_name="resize_ec2_instance",
+    action_store=action_store,
 )
 security_agent = AgentRunner(
     agent_id="security",
@@ -49,6 +60,8 @@ security_agent = AgentRunner(
     tool_definitions=security_tool_definitions,
     tool_dispatch=security_tool_dispatch,
     investigation_focus="IAM security risks such as overly broad permissions",
+    action_tool_name="tighten_iam_policy",
+    action_store=action_store,
 )
 
 
@@ -86,3 +99,41 @@ async def graph_stream(websocket: WebSocket):
             await websocket.receive_text()
     except WebSocketDisconnect:
         connection_manager.disconnect(websocket)
+
+
+@app.get("/actions")
+def list_actions():
+    return action_store.list()
+
+
+@app.post("/actions/{action_id}/approve")
+async def approve_action(action_id: str):
+    action = action_store.get(action_id)
+    if action is None:
+        raise HTTPException(status_code=404, detail="Action not found")
+    if action["status"] != "pending":
+        raise HTTPException(status_code=409, detail=f"Action already {action['status']}")
+
+    outcome = execute_action(action)
+    resolved = action_store.resolve(action_id, status="approved", result=outcome)
+
+    await connection_manager.broadcast(
+        {"type": "action_resolved", "action_id": action_id, "status": resolved["status"]}
+    )
+    return resolved
+
+
+@app.post("/actions/{action_id}/reject")
+async def reject_action(action_id: str):
+    action = action_store.get(action_id)
+    if action is None:
+        raise HTTPException(status_code=404, detail="Action not found")
+    if action["status"] != "pending":
+        raise HTTPException(status_code=409, detail=f"Action already {action['status']}")
+
+    resolved = action_store.resolve(action_id, status="rejected", result=None)
+
+    await connection_manager.broadcast(
+        {"type": "action_resolved", "action_id": action_id, "status": resolved["status"]}
+    )
+    return resolved
