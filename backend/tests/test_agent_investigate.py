@@ -31,9 +31,10 @@ async def test_investigate_node_returns_text_when_no_tool_use():
 
     node = {"node_id": "ec2:i-1", "resource_type": "ec2", "name": "web"}
 
-    text = await investigate_node(node, "cost trends", [], {}, client=mock_client)
+    text, proposed_actions = await investigate_node(node, "cost trends", [], {}, client=mock_client)
 
     assert text == "Cost looks stable."
+    assert proposed_actions == []
     mock_client.messages.create.assert_called_once()
 
 
@@ -54,9 +55,12 @@ async def test_investigate_node_executes_tool_then_returns_final_text():
     node = {"node_id": "lambda:fn", "resource_type": "lambda", "name": "fn"}
     tool_dispatch = {"list_lambda_functions": lambda: [{"function_name": "fn"}]}
 
-    text = await investigate_node(node, "performance issues", [], tool_dispatch, client=mock_client)
+    text, proposed_actions = await investigate_node(
+        node, "performance issues", [], tool_dispatch, client=mock_client
+    )
 
     assert text == "One function found, no issues."
+    assert proposed_actions == []
     assert mock_client.messages.create.call_count == 2
 
 
@@ -79,11 +83,12 @@ async def test_investigate_node_reports_tool_error_without_raising():
 
     node = {"node_id": "lambda:fn", "resource_type": "lambda", "name": "fn"}
 
-    text = await investigate_node(
+    text, proposed_actions = await investigate_node(
         node, "IAM security risks", [], {"get_iam_policy_for_role": broken_tool}, client=mock_client
     )
 
     assert text == "Could not verify policy."
+    assert proposed_actions == []
 
 
 @pytest.mark.anyio
@@ -96,7 +101,39 @@ async def test_investigate_node_stops_after_max_iterations():
 
     node = {"node_id": "ec2:i-1", "resource_type": "ec2", "name": "web"}
 
-    text = await investigate_node(node, "cost trends", [], {"noop": lambda: {}}, client=mock_client)
+    text, proposed_actions = await investigate_node(
+        node, "cost trends", [], {"noop": lambda: {}}, client=mock_client
+    )
 
     assert text == "Investigation inconclusive after multiple tool calls."
+    assert proposed_actions == []
     assert mock_client.messages.create.call_count == 5
+
+
+@pytest.mark.anyio
+async def test_investigate_node_collects_proposed_actions_from_tool_results():
+    mock_client = MagicMock()
+
+    tool_response = MagicMock()
+    tool_response.stop_reason = "tool_use"
+    tool_response.content = [_tool_use_block("t1", "stop_ec2_instance", {"instance_id": "i-1"})]
+
+    final_response = MagicMock()
+    final_response.stop_reason = "end_turn"
+    final_response.content = [_text_block("Proposed stopping idle instance i-1.")]
+
+    mock_client.messages.create.side_effect = [tool_response, final_response]
+
+    pending_action = {"id": "action-1", "tool_name": "stop_ec2_instance", "params": {"instance_id": "i-1"}}
+    tool_dispatch = {
+        "stop_ec2_instance": lambda instance_id: {"pending_action": pending_action, "message": "proposed"}
+    }
+
+    node = {"node_id": "ec2:i-1", "resource_type": "ec2", "name": "web"}
+
+    text, proposed_actions = await investigate_node(
+        node, "cost trends", [], tool_dispatch, client=mock_client
+    )
+
+    assert text == "Proposed stopping idle instance i-1."
+    assert proposed_actions == [pending_action]

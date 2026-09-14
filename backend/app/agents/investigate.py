@@ -15,7 +15,7 @@ async def investigate_node(
     tool_definitions: list[dict],
     tool_dispatch: dict,
     client=None,
-) -> str:
+) -> tuple[str, list[dict]]:
     client = client or Anthropic()
     messages = [
         {
@@ -28,6 +28,7 @@ async def investigate_node(
             ),
         }
     ]
+    proposed_actions: list[dict] = []
 
     for _ in range(MAX_TOOL_ITERATIONS):
         response = await asyncio.to_thread(
@@ -40,7 +41,8 @@ async def investigate_node(
         messages.append({"role": "assistant", "content": response.content})
 
         if response.stop_reason != "tool_use":
-            return "\n".join(block.text for block in response.content if block.type == "text")
+            text = "\n".join(block.text for block in response.content if block.type == "text")
+            return text, proposed_actions
 
         tool_results = []
         for block in response.content:
@@ -48,6 +50,8 @@ async def investigate_node(
                 continue
             try:
                 result = tool_dispatch[block.name](**block.input)
+                if isinstance(result, dict) and "pending_action" in result:
+                    proposed_actions.append(result["pending_action"])
                 content = json.dumps(result, default=str)
             except Exception as exc:
                 content = json.dumps({"error": str(exc)})
@@ -56,4 +60,4 @@ async def investigate_node(
             )
         messages.append({"role": "user", "content": tool_results})
 
-    return FALLBACK_FINDING
+    return FALLBACK_FINDING, proposed_actions
