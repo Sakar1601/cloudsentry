@@ -11,3 +11,4 @@ node_modules/
 .DS_Store
 *.log
 .aws-ops-agent.env
+*.db
