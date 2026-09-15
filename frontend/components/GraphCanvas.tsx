@@ -67,7 +67,7 @@ export default function GraphCanvas({ nodes, edges, onNodePositions }: GraphCanv
           if (!onNodePositions) return;
           const positions: Record<string, NodePosition> = {};
           for (const node of graphData.nodes as any[]) {
-            if (typeof node.x === "number" && typeof node.y === "number") {
+            if (Number.isFinite(node.x) && Number.isFinite(node.y)) {
               positions[node.id] = { x: node.x, y: node.y };
             }
           }

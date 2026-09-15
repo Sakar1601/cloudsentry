@@ -22,7 +22,12 @@ from app.graph.store import GraphStore
 graph_store = GraphStore()
 connection_manager = ConnectionManager()
 graph_poller = GraphPoller(store=graph_store, broadcaster=connection_manager)
-action_store = ActionStore(db_path="cloudsentry_actions.db")
+# Overridable so the test suite never writes into the same file a real
+# running server reads from (see backend/tests/conftest.py, which points
+# this at ":memory:" for every pytest run) — without this, `pytest` and
+# `uvicorn` sharing a cwd meant test fixture rows (node ids like "ec2:i-1")
+# showed up in a real, running server's actual audit log.
+action_store = ActionStore(db_path=os.environ.get("CLOUDSENTRY_ACTIONS_DB", "cloudsentry_actions.db"))
 
 cost_tool_definitions, cost_tool_dispatch = tool_subset(COST_TOOL_NAMES + ["stop_ec2_instance"])
 performance_tool_definitions, performance_tool_dispatch = tool_subset(
