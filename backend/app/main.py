@@ -1,7 +1,9 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.actions.executor import execute_action
 from app.actions.store import ActionStore
@@ -79,6 +81,21 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Cloudsentry Graph API", lifespan=lifespan)
+
+# The frontend (Next.js) runs on a different origin/port than this API in
+# every environment — local dev (localhost:3000 -> localhost:8000) and any
+# real deployment (Vercel -> the backend's own host) alike — so the browser
+# needs explicit CORS headers or every fetch/WebSocket call from the UI is
+# blocked. FRONTEND_ORIGIN lets a real deployment point this at its actual
+# frontend URL; local dev works out of the box against the default.
+FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[FRONTEND_ORIGIN],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")

@@ -1,17 +1,17 @@
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("react-force-graph-2d", () => ({
-  default: vi.fn(() => <div data-testid="force-graph-mock" />),
-}));
+const mockForceGraph2D = vi.fn(() => <div data-testid="force-graph-mock" />);
 
-import ForceGraph2D from "react-force-graph-2d";
+vi.mock("react-force-graph-2d", () => ({
+  default: mockForceGraph2D,
+}));
 
 import type { GraphNode } from "@/lib/types";
 import GraphCanvas from "./GraphCanvas";
 
 describe("GraphCanvas", () => {
-  it("passes mapped graphData to react-force-graph-2d", () => {
+  it("passes mapped graphData to react-force-graph-2d", async () => {
     const nodes: Record<string, GraphNode> = {
       "ec2:i-1": {
         node_id: "ec2:i-1",
@@ -27,7 +27,11 @@ describe("GraphCanvas", () => {
 
     render(<GraphCanvas nodes={nodes} edges={edges} />);
 
-    const call = (ForceGraph2D as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    // GraphCanvas loads react-force-graph-2d via next/dynamic (ssr: false),
+    // which resolves asynchronously even under a mock.
+    await waitFor(() => expect(mockForceGraph2D).toHaveBeenCalled());
+
+    const call = mockForceGraph2D.mock.calls[0][0];
     expect(call.graphData.nodes).toEqual([
       { id: "ec2:i-1", resourceType: "ec2", name: "web", color: "#f59e0b", val: expect.any(Number) },
     ]);

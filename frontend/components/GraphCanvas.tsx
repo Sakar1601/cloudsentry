@@ -1,10 +1,17 @@
 "use client";
 
-import ForceGraph2D from "react-force-graph-2d";
+import dynamic from "next/dynamic";
 
 import type { GraphEdge, GraphNode } from "@/lib/types";
 
 import styles from "./GraphCanvas.module.css";
+
+// react-force-graph-2d touches browser-only APIs (window, canvas) at
+// module load time. Next.js server-renders "use client" components on
+// first load too, so a static import crashes with "window is not
+// defined" during SSR — loading it dynamically with ssr:false defers
+// that import to the browser only.
+const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false });
 
 const RESOURCE_COLORS: Record<string, string> = {
   ec2: "#f59e0b",
