@@ -8,6 +8,12 @@ import styles from "./ActionCard.module.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+function resolvedClass(status: string): string {
+  if (status === "approved") return styles.resolvedApproved;
+  if (status === "rejected") return styles.resolvedRejected;
+  return styles.resolvedOther;
+}
+
 export interface ActionCardProps {
   action: PendingAction;
   x: number;
@@ -28,20 +34,23 @@ export default function ActionCard({ action, x, y }: ActionCardProps) {
 
   return (
     <div className={styles.card} style={{ left: x, top: y }} data-testid={`action-card-${action.id}`}>
-      <div className={styles.toolName}>{action.tool_name}</div>
+      <div className={styles.header}>
+        <span className={styles.toolName}>{action.tool_name}</span>
+        {action.status === "pending" && <span className={styles.badge}>Pending approval</span>}
+      </div>
       <pre className={styles.params}>{JSON.stringify(action.params, null, 2)}</pre>
       {action.proposed_reasoning && <p className={styles.reasoning}>{action.proposed_reasoning}</p>}
       {action.status === "pending" ? (
         <div className={styles.buttons}>
-          <button disabled={submitting} onClick={() => resolve("approve")}>
+          <button className={styles.approve} disabled={submitting} onClick={() => resolve("approve")}>
             Approve
           </button>
-          <button disabled={submitting} onClick={() => resolve("reject")}>
+          <button className={styles.reject} disabled={submitting} onClick={() => resolve("reject")}>
             Reject
           </button>
         </div>
       ) : (
-        <div className={styles.resolved}>{action.status}</div>
+        <span className={`${styles.resolved} ${resolvedClass(action.status)}`}>{action.status}</span>
       )}
     </div>
   );

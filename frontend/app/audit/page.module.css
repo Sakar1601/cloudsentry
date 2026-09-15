@@ -1,0 +1,29 @@
+.main {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-5);
+}
+
+.loading {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

@@ -7,9 +7,9 @@ const AGENT_LABELS: Record<string, string> = {
 };
 
 const AGENT_COLORS: Record<string, string> = {
-  cost: "#f59e0b",
-  performance: "#8b5cf6",
-  security: "#ef4444",
+  cost: "var(--agent-cost)",
+  performance: "var(--agent-performance)",
+  security: "var(--agent-security)",
 };
 
 export interface AgentIconProps {
@@ -20,7 +20,7 @@ export interface AgentIconProps {
 
 export default function AgentIcon({ agentId, x, y }: AgentIconProps) {
   const label = AGENT_LABELS[agentId] ?? agentId;
-  const color = AGENT_COLORS[agentId] ?? "#64748b";
+  const color = AGENT_COLORS[agentId] ?? "var(--node-default)";
 
   return (
     <div
@@ -28,6 +28,7 @@ export default function AgentIcon({ agentId, x, y }: AgentIconProps) {
       style={{ left: x, top: y, backgroundColor: color }}
       data-testid={`agent-icon-${agentId}`}
     >
+      <span className={styles.dot} aria-hidden="true" />
       {label}
     </div>
   );

@@ -1,6 +1,8 @@
+import "./globals.css";
+
 export const metadata = {
   title: "Cloudsentry",
-  description: "Living infrastructure map",
+  description: "Living infrastructure map — an AI ops copilot for AWS",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,7 +1,7 @@
 import { render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const mockForceGraph2D = vi.fn(() => <div data-testid="force-graph-mock" />);
+const mockForceGraph2D = vi.fn((_props: any) => <div data-testid="force-graph-mock" />);
 
 vi.mock("react-force-graph-2d", () => ({
   default: mockForceGraph2D,
@@ -33,7 +33,7 @@ describe("GraphCanvas", () => {
 
     const call = mockForceGraph2D.mock.calls[0][0];
     expect(call.graphData.nodes).toEqual([
-      { id: "ec2:i-1", resourceType: "ec2", name: "web", color: "#f59e0b", val: expect.any(Number) },
+      { id: "ec2:i-1", resourceType: "ec2", name: "web", color: "#4f8fd1", val: expect.any(Number) },
     ]);
     expect(call.graphData.links).toEqual([
       { source: "ec2:i-1", target: "ec2:i-2", relation: "same_vpc" },

@@ -1,11 +1,51 @@
 .bubble {
   position: absolute;
-  transform: translate(-50%, -140%);
-  max-width: 220px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #0f172a;
-  font-size: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translate(-50%, calc(-100% - 18px));
+  max-width: 260px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  box-shadow: var(--shadow-lg);
+  z-index: 3;
+  animation: rise 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: var(--bg-elevated-2);
+  border-right: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.agentLabel {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-1);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 18px));
+  }
 }
