@@ -18,15 +18,17 @@ export interface AgentIconProps {
   y: number;
   /** The agent has arrived and is still working on its finding. */
   thinking?: boolean;
+  /** Place the chip to the left of the node (used near the right edge of the canvas). */
+  flip?: boolean;
 }
 
-export default function AgentIcon({ agentId, x, y, thinking = false }: AgentIconProps) {
+export default function AgentIcon({ agentId, x, y, thinking = false, flip = false }: AgentIconProps) {
   const label = AGENT_LABELS[agentId] ?? agentId;
   const color = AGENT_COLORS[agentId] ?? "var(--node-default)";
 
   return (
     <div
-      className={styles.icon}
+      className={`${styles.icon} ${flip ? styles.flip : ""}`}
       style={{ left: x, top: y, ['--agent-color' as string]: color }}
       data-testid={`agent-icon-${agentId}`}
     >

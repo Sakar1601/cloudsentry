@@ -13,7 +13,9 @@ human approves it**, and every decision is logged.
 
 It runs entirely in your browser against a simulated account: no install, no sign-up, no credentials.
 
-![Landing page with the live product window](docs/images/landing.png)
+![Landing page](docs/images/landing.png)
+
+![The live product: agents investigating, approvals queued](docs/images/demo-live.png)
 
 ## What it looks like
 
@@ -22,6 +24,12 @@ It runs entirely in your browser against a simulated account: no install, no sig
 | ![App](docs/images/app.png) | ![Audit log](docs/images/audit.png) |
 
 *(The app screenshot is the real FastAPI backend in demo mode, so it shows no real account data.)*
+
+### Responsive
+
+The landing page, the app and the audit log are laid out for phones, tablets and desktops; the approvals queue, header and tables reflow rather than shrink.
+
+![Phone layouts](docs/images/mobile.png)
 
 ## What makes it different
 

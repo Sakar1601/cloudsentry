@@ -48,7 +48,7 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const narrow = areaWidth > 0 && areaWidth < 640;
+  const narrow = areaWidth > 0 && areaWidth < 860;
   const clampX = (x: number, half: number) =>
     areaWidth ? Math.min(Math.max(x, half + 8), areaWidth - half - 8) : x;
 
@@ -141,6 +141,7 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
                 x={position.x}
                 y={position.y}
                 thinking={thinking[agentId] === true}
+                flip={areaWidth > 0 && position.x + 160 > areaWidth}
               />
             );
           })}
