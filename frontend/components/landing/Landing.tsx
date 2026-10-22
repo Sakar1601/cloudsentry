@@ -59,9 +59,11 @@ export default function Landing() {
                 Read the source
               </a>
             </div>
-            <p className={styles.note}>
-              Everything below runs in your browser against a simulated AWS account. No sign-up, no backend.
-            </p>
+            <ul className={styles.proof}>
+              <li>Run end to end against a real AWS account</li>
+              <li>149 automated tests</li>
+              <li>Deployable with Terraform</li>
+            </ul>
           </div>
         </section>
 
@@ -69,8 +71,8 @@ export default function Landing() {
           <div className={`${styles.container} ${styles.stageWrap}`}>
             <DemoStage variant="hero" />
             <p className={styles.stageCaption}>
-              Click any node for details, approve or reject a proposal when one appears, or press{" "}
-              <strong>Trigger an incident</strong> to skip the wait.{" "}
+              This is the real interface running on a simulated account, entirely in your browser. Click a node,
+              approve or reject a proposal, or press <strong>Trigger an incident</strong> to skip the wait.{" "}
               <Link href="/demo">Open it full screen →</Link>
             </p>
           </div>

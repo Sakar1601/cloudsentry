@@ -1,30 +1,47 @@
-# Cloudsentry Frontend
+# Cloudsentry frontend
 
-Next.js (App Router) + TypeScript UI for Cloudsentry's live infrastructure graph. See `docs/spec.md` for design details.
+Next.js (App Router) + TypeScript UI for Cloudsentry's live infrastructure graph. Design: [`../docs/spec.md`](../docs/spec.md).
+
+## Modes
+
+| Mode | How | What `/` shows |
+|---|---|---|
+| Real backend | `npm run dev` with the FastAPI service running | the working app (graph, approvals, activity) |
+| Static demo | `NEXT_PUBLIC_STATIC_DEMO=1` (`npm run build:demo`) | an explainer page with the live product embedded; the app is at `/demo` |
+
+All backend access goes through [`lib/api.ts`](lib/api.ts). In static-demo mode it talks to the in-browser simulator
+([`lib/demo/engine.ts`](lib/demo/engine.ts)) instead of the API, which lets the whole UI export as plain static files.
 
 ## Local development
 
 ```bash
-cp .env.local.example .env.local
-npm install
+cp .env.local.example .env.local      # NEXT_PUBLIC_API_BASE_URL, default http://localhost:8000
+npm ci
 npm run dev
 ```
 
-Requires the backend (`backend/`) running locally and reachable at the URL in `NEXT_PUBLIC_API_BASE_URL` (defaults to `http://localhost:8000`).
+Requires the backend (`../backend`) to be reachable at `NEXT_PUBLIC_API_BASE_URL`. For no-credentials development run it
+with `CLOUDSENTRY_DEMO=1`.
 
-## Testing
+## Structure
+
+- `app/` — `/` (landing in static demo, app otherwise), `/demo`, `/audit`
+- `components/` — `DemoStage` (graph + overlays), `AppSidebar` / `ActivityFeed` (approvals and agent activity),
+  `GraphCanvas`, `ActionCard`, `AuditTable`, and `landing/` (the explainer sections)
+- `lib/` — `api.ts` (backend seam), `useGraphSocket.ts` (state from REST + WebSocket), `demo/engine.ts` (simulator),
+  `walkthrough.ts` (the five-step cycle copy shared by the stepper and the written flow)
+
+## Test and build
 
 ```bash
-npm test
+npm test                 # vitest (28 tests)
+npx tsc --noEmit
+npm run build            # production build for the real backend
+npm run build:demo       # static export to out/
 ```
 
 ## Deployment
 
-This app deploys to [Vercel](https://vercel.com) (per `docs/spec.md` §4.8's "S3 + CloudFront or Vercel" choice — Vercel is the zero-config option for a Next.js app and needs no additional Terraform).
-
-1. Connect this repository to a Vercel project (via the Vercel dashboard, or the `vercel` CLI — requires a Vercel account this project cannot create or authenticate for you).
-2. Set `NEXT_PUBLIC_API_BASE_URL` as a Vercel project environment variable, pointing at the deployed backend's URL.
-3. **Dependency note:** the backend's ECS service (`infra/terraform/ecs/`) currently has no public endpoint — see that module's "no ALB" deferred item in `infra/README.md`. Add a load balancer and public routing to the backend before this frontend deployment can actually reach a live backend from outside AWS's network.
-4. Deploy: push to the connected branch, or run `vercel deploy` locally.
-
-`vercel.json` in this directory just pins the build/dev/install commands Vercel would otherwise infer.
+- **Static demo:** GitHub Pages via `.github/workflows/pages.yml` (sets `NEXT_PUBLIC_BASE_PATH=/<repo>`).
+- **Real app:** Vercel (`vercel.json` pins the commands). Set `NEXT_PUBLIC_API_BASE_URL` to the deployed backend. The
+  backend's ECS service has no public endpoint yet; see `../infra/README.md`.

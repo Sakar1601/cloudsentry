@@ -150,3 +150,45 @@ def test_build_graph_defaults_to_empty_clients_dict():
                                    "iam": MagicMock()})
 
     assert result == {"nodes": {}, "edges": []}
+
+
+def test_cost_explorer_is_cached_between_polls(monkeypatch):
+    from app.graph import builder
+
+    calls = []
+    monkeypatch.setattr(builder, "build_cost_by_resource_type", lambda client=None: calls.append(1) or {"ec2": 1.0})
+    monkeypatch.setattr(builder, "_cost_cache", {"at": None, "value": None})
+    monkeypatch.setattr(builder, "COST_TTL_SECONDS", 3600.0)
+
+    first = builder._cost_by_type({})
+    second = builder._cost_by_type({})
+
+    assert first == second == {"ec2": 1.0}
+    assert len(calls) == 1
+
+
+def test_cost_explorer_cache_expires(monkeypatch):
+    from app.graph import builder
+
+    calls = []
+    monkeypatch.setattr(builder, "build_cost_by_resource_type", lambda client=None: calls.append(1) or {})
+    monkeypatch.setattr(builder, "_cost_cache", {"at": None, "value": None})
+    monkeypatch.setattr(builder, "COST_TTL_SECONDS", 0.0)
+
+    builder._cost_by_type({})
+    builder._cost_by_type({})
+
+    assert len(calls) == 2
+
+
+def test_injected_cost_client_bypasses_the_cache(monkeypatch):
+    from app.graph import builder
+
+    seen = []
+    monkeypatch.setattr(builder, "build_cost_by_resource_type", lambda client=None: seen.append(client) or {})
+    monkeypatch.setattr(builder, "_cost_cache", {"at": None, "value": None})
+
+    builder._cost_by_type({"ce": "fake-client"})
+    builder._cost_by_type({"ce": "fake-client"})
+
+    assert seen == ["fake-client", "fake-client"]

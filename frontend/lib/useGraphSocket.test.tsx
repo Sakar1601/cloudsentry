@@ -173,4 +173,34 @@ describe("useGraphSocket", () => {
 
     await waitFor(() => expect(result.current.actions["action-1"]).toEqual(pendingAction));
   });
+
+  it("keeps a newest-first activity log of findings, proposals and resolutions", async () => {
+    const { result } = renderHook(() => useGraphSocket());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const socket = FakeWebSocket.instances[0];
+
+    act(() => {
+      socket.emit("message", { type: "finding", agent_id: "cost", node_id: "ec2:i-1", text: "Idle." });
+      socket.emit("message", { type: "action_resolved", action_id: "a1", status: "approved" });
+      socket.emit("message", { type: "node_updated", node: { node_id: "ec2:i-1" } });
+    });
+
+    const kinds = result.current.activity?.map((item) => item.kind);
+    expect(kinds).toEqual(["resolved", "finding"]);
+    expect(result.current.activity?.[1].text).toBe("Idle.");
+    expect(result.current.activity?.[0].status).toBe("approved");
+  });
+
+  it("reports the websocket connection status", async () => {
+    const { result } = renderHook(() => useGraphSocket());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.connection).toBe("connecting");
+
+    const socket = FakeWebSocket.instances[0];
+    act(() => socket.emit("open", {}));
+    expect(result.current.connection).toBe("live");
+
+    act(() => socket.emit("close", {}));
+    expect(result.current.connection).toBe("closed");
+  });
 });

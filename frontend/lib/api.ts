@@ -35,9 +35,19 @@ export async function resolveAction(id: string, decision: "approve" | "reject"):
 }
 
 /** Subscribe to live events. Returns an unsubscribe function. */
-export function connectStream(onMessage: (message: any) => void): () => void {
-  if (STATIC_DEMO) return getDemoEngine().subscribe(onMessage);
+export function connectStream(
+  onMessage: (message: any) => void,
+  onStatus?: (status: "connecting" | "live" | "closed") => void,
+): () => void {
+  if (STATIC_DEMO) {
+    onStatus?.("live");
+    return getDemoEngine().subscribe(onMessage);
+  }
+  onStatus?.("connecting");
   const socket = new WebSocket(`${API_BASE_URL.replace(/^http/, "ws")}/graph/stream`);
+  socket.addEventListener("open", () => onStatus?.("live"));
+  socket.addEventListener("close", () => onStatus?.("closed"));
+  socket.addEventListener("error", () => onStatus?.("closed"));
   socket.addEventListener("message", (event: MessageEvent) => onMessage(JSON.parse(event.data)));
   return () => socket.close();
 }

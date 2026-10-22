@@ -323,3 +323,23 @@ Each phase produces working, independently testable software:
 - **Phase 6 — Deployment + least-privilege IAM.** Terraform for
   Cloudsentry's own execution role, containerized API deployment,
   frontend deployment, Traffic Generator run as a separate process.
+
+## 8. Implementation status
+
+All six phases are built and the system has been run end to end against a real AWS account.
+
+| Area | Status |
+|---|---|
+| Tool layer, graph builder, live deltas, agent swarm, approval gate, audit log | Built and tested (121 backend tests) |
+| Web UI | Built: live graph, agent markers, findings, approval queue, persistent activity feed, audit log with details (28 tests) |
+| Terraform (task role, ECS Fargate) | Written and validated; the ECS service has no load balancer yet, so it is not publicly reachable |
+| Traffic generator | Built as a standalone process |
+
+Additions beyond the original spec, made to make the project runnable and demonstrable without an AWS account:
+
+- **Demo mode** (`CLOUDSENTRY_DEMO=1`): a fictional account and scripted agents behind the same poller, stream and
+  approval API (`backend/app/demo/`).
+- **Static demo site**: the UI with an in-browser simulator (`frontend/lib/demo/engine.ts`), exported statically and
+  deployed to GitHub Pages, with an explainer landing page.
+- **Cost Explorer cache** (`CLOUDSENTRY_COST_TTL`): Cost Explorer bills per request, so it is not called on every poll.
+

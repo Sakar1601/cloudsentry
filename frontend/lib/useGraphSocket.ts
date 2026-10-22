@@ -10,9 +10,13 @@ import type {
   GraphEdge,
   GraphNode,
   GraphSocketState,
+  ActivityItem,
+  ConnectionStatus,
   LastEvent,
   PendingAction,
 } from "./types";
+
+const MAX_ACTIVITY = 60;
 
 function edgeKey(edge: GraphEdge): string {
   return `${edge.source}|${edge.target}|${edge.relation}`;
@@ -35,6 +39,9 @@ export function useGraphSocket(): GraphSocketState {
   const [actions, setActions] = useState<Record<string, PendingAction>>({});
   const [loading, setLoading] = useState(true);
   const [lastEvent, setLastEvent] = useState<LastEvent | null>(null);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [connection, setConnection] = useState<ConnectionStatus>("connecting");
+  const seq = useRef(0);
   const disconnectRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -53,6 +60,27 @@ export function useGraphSocket(): GraphSocketState {
           nodeId: message.node_id ?? message.target_node_id,
           at: Date.now(),
         });
+      }
+      const kind =
+        message.type === "finding"
+          ? "finding"
+          : message.type === "action_proposed"
+            ? "proposed"
+            : message.type === "action_resolved"
+              ? "resolved"
+              : null;
+      if (kind) {
+        const item: ActivityItem = {
+          id: `${Date.now()}-${seq.current++}`,
+          kind,
+          agentId: message.agent_id,
+          nodeId: message.node_id,
+          actionId: message.action_id,
+          text: message.text,
+          status: message.status,
+          at: Date.now(),
+        };
+        setActivity((prev) => [item, ...prev].slice(0, MAX_ACTIVITY));
       }
       switch (message.type) {
         case "node_added":
@@ -106,7 +134,9 @@ export function useGraphSocket(): GraphSocketState {
         if (!cancelled) setActions(byId);
       });
 
-      disconnectRef.current = connectStream(handleMessage);
+      disconnectRef.current = connectStream(handleMessage, (status) => {
+        if (!cancelled) setConnection(status);
+      });
     }
 
     init();
@@ -117,5 +147,5 @@ export function useGraphSocket(): GraphSocketState {
     };
   }, []);
 
-  return { nodes, edges, agents, findings, actions, loading, lastEvent };
+  return { nodes, edges, agents, findings, actions, loading, lastEvent, activity, connection };
 }

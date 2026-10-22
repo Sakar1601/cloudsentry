@@ -1,20 +1,90 @@
-.stage {
+/* Landing hero: the product in a window frame. */
+.window {
   display: flex;
+  flex-direction: column;
   background: var(--bg);
-  min-height: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 -60px 120px rgba(77, 163, 255, 0.07);
 }
 
+.chrome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 10px var(--space-4);
+  background: var(--bg-elevated-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.lights {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.lights i {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+}
+
+.url {
+  flex: 1;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.livePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--status-approved);
+  font-weight: 600;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--status-approved);
+  animation: pulse 2.4s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(62, 207, 142, 0.5);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px rgba(62, 207, 142, 0);
+  }
+}
+
+.heroCanvas {
+  display: flex;
+  height: min(600px, 70vh);
+  min-height: 460px;
+}
+
+/* App: canvas + sidebar filling the viewport under the header. */
 .app {
   flex: 1;
+  display: flex;
+  min-height: 0;
+  background: var(--bg);
 }
 
-.hero {
-  height: min(680px, 78vh);
-  min-height: 520px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 2px 0 rgba(255, 255, 255, 0.03) inset;
+.appCanvas {
+  flex: 1;
+  display: flex;
+  min-width: 0;
 }
 
 .canvasArea {
@@ -138,27 +208,6 @@
   border-color: var(--accent);
 }
 
-@media (max-width: 900px) {
-  .hero {
-    flex-direction: column;
-    height: auto;
-    min-height: 0;
-  }
-
-  .canvasArea {
-    height: 560px;
-    flex: none;
-  }
-
-  .legend {
-    display: none;
-  }
-
-  .hero > :first-child {
-    order: 2;
-  }
-}
-
 /* Pending approvals dock down the right edge (a row along the bottom on
    narrow screens) so cards never cover the graph or each other. */
 .tray {
@@ -190,4 +239,33 @@
   overflow-x: auto;
   overflow-y: hidden;
   background: linear-gradient(to top, var(--bg) 60%, transparent);
+}
+
+@media (max-width: 900px) {
+  .app {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .appCanvas {
+    flex: none;
+    height: 70vh;
+    min-height: 420px;
+  }
+
+  .heroCanvas {
+    height: 540px;
+  }
+
+  .legend {
+    display: none;
+  }
+
+  .url {
+    display: none;
+  }
+
+  .livePill {
+    margin-left: auto;
+  }
 }

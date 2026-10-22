@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import ActionCard from "@/components/ActionCard";
 import AgentIcon from "@/components/AgentIcon";
+import AppSidebar from "@/components/AppSidebar";
 import FindingBubble from "@/components/FindingBubble";
-import FlowRail from "@/components/FlowRail";
+import FlowStepper from "@/components/FlowStepper";
 import GraphCanvas, { type NodePosition } from "@/components/GraphCanvas";
 import NodePanel from "@/components/NodePanel";
 import { STATIC_DEMO, triggerIncident } from "@/lib/api";
@@ -17,33 +18,33 @@ import styles from "./DemoStage.module.css";
 const EVENT_STEP_MS = 3500;
 
 export interface DemoStageProps {
-  /** hero: embedded with the walkthrough rail. app: full-bleed working view. */
+  /** hero: a framed product window with the walkthrough stepper (landing page).
+   *  app: the working view, with a sidebar for approvals and agent activity. */
   variant?: "hero" | "app";
 }
 
 export default function DemoStage({ variant = "app" }: DemoStageProps) {
-  const { nodes, edges, agents, findings, actions, loading, lastEvent } = useGraphSocket();
+  const { nodes, edges, agents, findings, actions, loading, lastEvent, activity, connection } = useGraphSocket();
   const [positions, setPositions] = useState<Record<string, NodePosition>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [latestFindingAgent, setLatestFindingAgent] = useState<string | null>(null);
   const areaRef = useRef<HTMLDivElement>(null);
-  const [area, setArea] = useState({ width: 0, height: 0 });
+  const [areaWidth, setAreaWidth] = useState(0);
 
-  // Overlays are positioned from node coordinates, so keep them inside the
-  // canvas, and dock approval cards below the graph when the canvas is narrow.
+  // Overlays are positioned from node coordinates, so keep them inside the canvas.
   useEffect(() => {
     const element = areaRef.current;
     if (!element) return;
     const observer = new ResizeObserver(([entry]) => {
-      if (entry) setArea({ width: entry.contentRect.width, height: entry.contentRect.height });
+      if (entry) setAreaWidth(entry.contentRect.width);
     });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const narrow = area.width > 0 && area.width < 640;
+  const narrow = areaWidth > 0 && areaWidth < 640;
   const clampX = (x: number, half: number) =>
-    area.width ? Math.min(Math.max(x, half + 8), area.width - half - 8) : x;
+    areaWidth ? Math.min(Math.max(x, half + 8), areaWidth - half - 8) : x;
 
   // Re-evaluate the "what is happening right now" step when a recent event ages out.
   useEffect(() => {
@@ -70,83 +71,108 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
 
   const nodeCount = Object.keys(nodes).length;
   const selectedNode = selected ? nodes[selected] : null;
+  const isHero = variant === "hero";
 
-  return (
-    <div className={`${styles.stage} ${variant === "hero" ? styles.hero : styles.app}`}>
-      {variant === "hero" && (
-        <FlowRail
+  const canvas = (
+    <div className={styles.canvasArea} ref={areaRef}>
+      {loading ? (
+        <div className={styles.status}>
+          <div className={styles.statusInner}>
+            <div className={styles.spinner} aria-hidden="true" />
+            <span>Loading graph…</span>
+          </div>
+        </div>
+      ) : nodeCount === 0 ? (
+        <div className={styles.status}>
+          <div className={styles.statusInner}>
+            <span className={styles.statusTitle}>No resources found in this account yet.</span>
+            <span>Once EC2, Lambda, or DynamoDB resources exist, they'll appear here live.</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <GraphCanvas nodes={nodes} edges={edges} onNodePositions={setPositions} onNodeClick={setSelected} />
+
+          {Object.entries(agents).map(([agentId, agentState]) => {
+            const position = positions[agentState.targetNodeId];
+            if (!position) return null;
+            return <AgentIcon key={agentId} agentId={agentId} x={position.x} y={position.y} />;
+          })}
+
+          {Object.entries(findings).map(([agentId, finding]) => {
+            const position = positions[finding.nodeId];
+            if (!position) return null;
+            return (
+              <FindingBubble
+                key={agentId}
+                agentId={agentId}
+                text={finding.text}
+                x={clampX(position.x, 112)}
+                y={position.y}
+                dim={latestFindingAgent !== null && latestFindingAgent !== agentId}
+              />
+            );
+          })}
+
+          {/* Hero: approvals dock inside the canvas. App: they live in the sidebar. */}
+          {isHero && pendingCount > 0 && (
+            <div className={`${styles.tray} ${narrow ? styles.trayNarrow : ""}`} aria-label="Pending approvals">
+              {pendingActions.map((action) => (
+                <ActionCard key={action.id} action={action} x={0} y={0} docked />
+              ))}
+            </div>
+          )}
+
+          <Legend />
+
+          {!isHero && STATIC_DEMO && (
+            <button type="button" className={styles.incident} onClick={triggerIncident}>
+              Trigger an incident
+            </button>
+          )}
+
+          {selectedNode && <NodePanel node={selectedNode} onClose={() => setSelected(null)} />}
+        </>
+      )}
+    </div>
+  );
+
+  if (isHero) {
+    return (
+      <div className={styles.window}>
+        <div className={styles.chrome}>
+          <span className={styles.lights} aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <span className={styles.url}>Cloudsentry · simulated AWS account</span>
+          <span className={styles.livePill}>
+            <span className={styles.liveDot} aria-hidden="true" />
+            Live simulation
+          </span>
+        </div>
+        <FlowStepper
           activeStep={activeStep}
           pendingCount={pendingCount}
           canTrigger={STATIC_DEMO}
           onTrigger={triggerIncident}
         />
-      )}
-
-      <div className={styles.canvasArea} ref={areaRef}>
-        {loading ? (
-          <div className={styles.status}>
-            <div className={styles.statusInner}>
-              <div className={styles.spinner} aria-hidden="true" />
-              <span>Loading graph…</span>
-            </div>
-          </div>
-        ) : nodeCount === 0 ? (
-          <div className={styles.status}>
-            <div className={styles.statusInner}>
-              <span className={styles.statusTitle}>No resources found in this account yet.</span>
-              <span>Once EC2, Lambda, or DynamoDB resources exist, they'll appear here live.</span>
-            </div>
-          </div>
-        ) : (
-          <>
-            <GraphCanvas
-              nodes={nodes}
-              edges={edges}
-              onNodePositions={setPositions}
-              onNodeClick={setSelected}
-            />
-
-            {Object.entries(agents).map(([agentId, agentState]) => {
-              const position = positions[agentState.targetNodeId];
-              if (!position) return null;
-              return <AgentIcon key={agentId} agentId={agentId} x={position.x} y={position.y} />;
-            })}
-
-            {Object.entries(findings).map(([agentId, finding]) => {
-              const position = positions[finding.nodeId];
-              if (!position) return null;
-              return (
-                <FindingBubble
-                  key={agentId}
-                  agentId={agentId}
-                  text={finding.text}
-                  x={clampX(position.x, 112)}
-                  y={position.y}
-                  dim={latestFindingAgent !== null && latestFindingAgent !== agentId}
-                />
-              );
-            })}
-
-            {pendingActions.length > 0 && (
-              <div className={`${styles.tray} ${narrow ? styles.trayNarrow : ""}`} aria-label="Pending approvals">
-                {pendingActions.map((action) => (
-                  <ActionCard key={action.id} action={action} x={0} y={0} docked />
-                ))}
-              </div>
-            )}
-
-            <Legend />
-
-            {variant === "app" && STATIC_DEMO && (
-              <button type="button" className={styles.incident} onClick={triggerIncident}>
-                Trigger an incident
-              </button>
-            )}
-
-            {selectedNode && <NodePanel node={selectedNode} onClose={() => setSelected(null)} />}
-          </>
-        )}
+        <div className={styles.heroCanvas}>{canvas}</div>
       </div>
+    );
+  }
+
+  return (
+    <div className={styles.app}>
+      <div className={styles.appCanvas}>{canvas}</div>
+      <AppSidebar
+        nodes={nodes}
+        actions={actions}
+        activity={activity ?? []}
+        connection={connection ?? "live"}
+        simulated={STATIC_DEMO}
+      />
     </div>
   );
 }

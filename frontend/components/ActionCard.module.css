@@ -175,7 +175,7 @@
 .docked {
   position: relative;
   transform: none;
-  width: 264px;
+  width: var(--card-width, 264px);
   flex: 0 0 auto;
   animation: none;
 }

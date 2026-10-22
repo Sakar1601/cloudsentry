@@ -43,6 +43,19 @@ export interface LastEvent {
   at: number;
 }
 
+export interface ActivityItem {
+  id: string;
+  kind: "finding" | "proposed" | "resolved";
+  agentId?: string;
+  nodeId?: string;
+  actionId?: string;
+  text?: string;
+  status?: string;
+  at: number;
+}
+
+export type ConnectionStatus = "connecting" | "live" | "closed";
+
 export interface GraphSocketState {
   nodes: Record<string, GraphNode>;
   edges: GraphEdge[];
@@ -52,4 +65,7 @@ export interface GraphSocketState {
   loading: boolean;
   /** Most recent agent-lifecycle event (move, finding, proposal, resolution). */
   lastEvent?: LastEvent | null;
+  /** Newest-first log of findings, proposals and resolutions (capped). */
+  activity?: ActivityItem[];
+  connection?: ConnectionStatus;
 }
