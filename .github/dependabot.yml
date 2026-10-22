@@ -1,21 +1,50 @@
 # Keeps dependencies (and CI actions) patched. Security updates open PRs automatically.
+# Minor and patch updates are grouped into one PR per ecosystem to keep the noise down;
+# major versions arrive on their own so each can be tested.
 version: 2
 updates:
   - package-ecosystem: pip
     directory: /backend
     schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-and-patch:
+        update-types: [minor, patch]
+
   - package-ecosystem: npm
     directory: /frontend
     schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # React 19 has to be adopted as one migration: react, react-dom and their types
+      # move together, and react-force-graph-2d must support it. Bumping one on its own
+      # breaks the install.
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: terraform
     directory: /infra/terraform/iam
     schedule: { interval: monthly }
   - package-ecosystem: terraform
     directory: /infra/terraform/ecs
     schedule: { interval: monthly }
+
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      github-actions:
+        patterns: ["*"]
+
   - package-ecosystem: docker
     directory: /backend
     schedule: { interval: monthly }
