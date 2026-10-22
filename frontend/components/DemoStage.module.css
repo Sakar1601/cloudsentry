@@ -93,8 +93,18 @@
   min-width: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 1px 1px, rgba(139, 147, 163, 0.12) 1px, transparent 0) 0 0 / 28px 28px,
+    radial-gradient(ellipse 55% 45% at 12% 0%, rgba(90, 168, 255, 0.13), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 92% 100%, rgba(143, 123, 255, 0.11), transparent 70%),
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.07) 1px, transparent 0) 0 0 / 26px 26px,
     var(--bg);
+}
+
+.canvasArea::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
 }
 
 .status {
@@ -146,10 +156,12 @@
   gap: var(--space-2);
   font-size: var(--text-xs);
   color: var(--text-secondary);
-  background: rgba(18, 22, 29, 0.92);
-  border: 1px solid var(--border);
+  background: rgba(10, 14, 21, 0.78);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  z-index: 1;
+  box-shadow: var(--edge-highlight), var(--shadow-lg);
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -181,6 +193,7 @@
   height: 8px;
   border-radius: var(--radius-full);
   display: inline-block;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .legendNote {
@@ -192,20 +205,25 @@
   bottom: var(--space-4);
   right: var(--space-4);
   z-index: 4;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-strong);
-  background: var(--bg-elevated-2);
-  color: var(--text-primary);
-  font-weight: 600;
+  padding: 10px var(--space-5);
+  border-radius: 999px;
+  border: 0;
+  background: var(--gradient-accent);
+  color: #06101d;
+  font-weight: 700;
   font-size: var(--text-sm);
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  box-shadow: var(--glow-accent);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
 }
 
 .incident:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.incident:active {
+  transform: translateY(0);
 }
 
 /* Pending approvals dock down the right edge (a row along the bottom on
@@ -267,5 +285,53 @@
 
   .livePill {
     margin-left: auto;
+  }
+}
+
+/* Loading: three nodes pulsing in turn, like the account being scanned. */
+.scan {
+  position: relative;
+  width: 64px;
+  height: 52px;
+}
+
+.scan i {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  animation: scan 1.4s ease-in-out infinite;
+}
+
+.scan i:nth-child(1) {
+  left: 25px;
+  top: 0;
+}
+
+.scan i:nth-child(2) {
+  left: 2px;
+  bottom: 0;
+  background: var(--node-lambda);
+  animation-delay: 0.25s;
+}
+
+.scan i:nth-child(3) {
+  right: 2px;
+  bottom: 0;
+  background: var(--node-dynamodb);
+  animation-delay: 0.5s;
+}
+
+@keyframes scan {
+  0%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+    box-shadow: 0 0 18px currentColor;
   }
 }

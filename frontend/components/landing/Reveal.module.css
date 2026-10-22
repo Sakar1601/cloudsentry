@@ -1,0 +1,10 @@
+.reveal {
+  transition:
+    opacity 800ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 800ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hidden {
+  opacity: 0;
+  transform: translateY(28px);
+}

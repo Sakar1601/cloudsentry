@@ -55,12 +55,12 @@ export default function AuditTable({ actions }: AuditTableProps) {
         <thead>
           <tr>
             <th aria-label="Details" />
-            <th>Created</th>
+            <th className={styles.colCreated}>Created</th>
             <th>Agent</th>
-            <th>Node</th>
+            <th className={styles.colNode}>Node</th>
             <th>Tool</th>
             <th>Status</th>
-            <th>Resolved</th>
+            <th className={styles.colResolved}>Resolved</th>
           </tr>
         </thead>
         <tbody>
@@ -80,22 +80,25 @@ export default function AuditTable({ actions }: AuditTableProps) {
                       <span className={open ? styles.chevronOpen : styles.chevron} aria-hidden="true" />
                     </button>
                   </td>
-                  <td className={styles.mono}>{formatTime(action.created_at)}</td>
+                  <td className={`${styles.mono} ${styles.colCreated}`}>{formatTime(action.created_at)}</td>
                   <td className={styles.agentCell}>
                     <span className={styles.agentDot} style={{ background: AGENT_COLORS[action.agent_id] ?? "var(--node-default)" }} />
                     {action.agent_id}
                   </td>
-                  <td className={styles.mono}>{action.node_id}</td>
+                  <td className={`${styles.mono} ${styles.colNode}`}>{action.node_id}</td>
                   <td className={styles.mono}>{action.tool_name}</td>
                   <td>
                     <span className={`${styles.pill} ${pillClass(action.status)}`}>{action.status}</span>
                   </td>
-                  <td className={styles.mono}>{formatTime(action.resolved_at)}</td>
+                  <td className={`${styles.mono} ${styles.colResolved}`}>{formatTime(action.resolved_at)}</td>
                 </tr>
                 {open && (
                   <tr className={styles.detailRow}>
                     <td />
                     <td colSpan={6}>
+                      <p className={styles.meta}>
+                        <span>Created</span> {formatTime(action.created_at)} <span>Node</span> {action.node_id} <span>Resolved</span> {formatTime(action.resolved_at)}
+                      </p>
                       <div className={styles.detail}>
                         <div>
                           <h4 className={styles.detailHeading}>Exact change proposed</h4>

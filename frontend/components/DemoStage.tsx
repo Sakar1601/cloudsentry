@@ -9,8 +9,12 @@ import FindingBubble from "@/components/FindingBubble";
 import FlowStepper from "@/components/FlowStepper";
 import GraphCanvas, { type NodePosition } from "@/components/GraphCanvas";
 import NodePanel from "@/components/NodePanel";
+import OutcomeCard from "@/components/OutcomeCard";
 import { STATIC_DEMO, triggerIncident } from "@/lib/api";
+import { describeOutcome } from "@/lib/outcome";
+import { useAnomalies } from "@/lib/useAnomalies";
 import { useGraphSocket } from "@/lib/useGraphSocket";
+import { useRecentlyResolved } from "@/lib/useRecentlyResolved";
 import type { StepId } from "@/lib/walkthrough";
 
 import styles from "./DemoStage.module.css";
@@ -29,6 +33,8 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [latestFindingAgent, setLatestFindingAgent] = useState<string | null>(null);
+  // Agents that have arrived at a node but have not reported a finding yet.
+  const [thinking, setThinking] = useState<Record<string, boolean>>({});
   const areaRef = useRef<HTMLDivElement>(null);
   const [areaWidth, setAreaWidth] = useState(0);
 
@@ -50,10 +56,29 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
   useEffect(() => {
     if (!lastEvent) return;
     if (lastEvent.type === "finding" && lastEvent.agentId) setLatestFindingAgent(lastEvent.agentId);
+    if (lastEvent.agentId && lastEvent.type === "agent_move") setThinking((t) => ({ ...t, [lastEvent.agentId!]: true }));
+    if (lastEvent.agentId && lastEvent.type === "finding") setThinking((t) => ({ ...t, [lastEvent.agentId!]: false }));
     setNow(Date.now());
     const timer = setTimeout(() => setNow(Date.now()), EVENT_STEP_MS + 50);
     return () => clearTimeout(timer);
   }, [lastEvent]);
+
+  const { entries: resolvedEntries, dismiss } = useRecentlyResolved(actions);
+  const highlights = useMemo(() => {
+    const map: Record<string, { tone: "success" | "rejected" | "error"; at: number }> = {};
+    for (const entry of resolvedEntries) {
+      map[entry.action.node_id] = { tone: describeOutcome(entry.action).tone, at: entry.at };
+    }
+    return map;
+  }, [resolvedEntries]);
+
+  const agentTargets = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const [agentId, state] of Object.entries(agents)) (map[state.targetNodeId] ??= []).push(agentId);
+    return map;
+  }, [agents]);
+
+  const anomalies = useAnomalies(nodes);
 
   const pendingActions = Object.values(actions).filter((a) => a.status === "pending");
   const pendingCount = pendingActions.length;
@@ -78,7 +103,11 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
       {loading ? (
         <div className={styles.status}>
           <div className={styles.statusInner}>
-            <div className={styles.spinner} aria-hidden="true" />
+            <div className={styles.scan} aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </div>
             <span>Loading graph…</span>
           </div>
         </div>
@@ -91,12 +120,29 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
         </div>
       ) : (
         <>
-          <GraphCanvas nodes={nodes} edges={edges} onNodePositions={setPositions} onNodeClick={setSelected} />
+          <GraphCanvas
+            nodes={nodes}
+            edges={edges}
+            onNodePositions={setPositions}
+            onNodeClick={setSelected}
+            highlights={highlights}
+            agentTargets={agentTargets}
+            selectedId={selected}
+            anomalies={anomalies}
+          />
 
           {Object.entries(agents).map(([agentId, agentState]) => {
             const position = positions[agentState.targetNodeId];
             if (!position) return null;
-            return <AgentIcon key={agentId} agentId={agentId} x={position.x} y={position.y} />;
+            return (
+              <AgentIcon
+                key={agentId}
+                agentId={agentId}
+                x={position.x}
+                y={position.y}
+                thinking={thinking[agentId] === true}
+              />
+            );
           })}
 
           {Object.entries(findings).map(([agentId, finding]) => {
@@ -115,8 +161,11 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
           })}
 
           {/* Hero: approvals dock inside the canvas. App: they live in the sidebar. */}
-          {isHero && pendingCount > 0 && (
-            <div className={`${styles.tray} ${narrow ? styles.trayNarrow : ""}`} aria-label="Pending approvals">
+          {isHero && (pendingCount > 0 || resolvedEntries.length > 0) && (
+            <div className={`${styles.tray} ${narrow ? styles.trayNarrow : ""}`} aria-label="Approvals">
+              {resolvedEntries.map((entry) => (
+                <OutcomeCard key={`out-${entry.action.id}`} action={entry.action} onDismiss={() => dismiss(entry.action.id)} />
+              ))}
               {pendingActions.map((action) => (
                 <ActionCard key={action.id} action={action} x={0} y={0} docked />
               ))}
@@ -172,6 +221,8 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
         activity={activity ?? []}
         connection={connection ?? "live"}
         simulated={STATIC_DEMO}
+        resolved={resolvedEntries}
+        onDismissResolved={dismiss}
       />
     </div>
   );

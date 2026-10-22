@@ -1,3 +1,4 @@
+import Reveal from "./Reveal";
 import styles from "./landing.module.css";
 
 const ROWS: { layer: string; what: string; tech: string }[] = [
@@ -47,13 +48,14 @@ export default function Stack() {
   return (
     <section id="stack" className={`${styles.section} ${styles.sectionAlt}`}>
       <div className={styles.container}>
-        <div className={styles.sectionHead}>
+        <Reveal className={styles.sectionHead}>
           <h2 className={styles.h2}>What is in the repository.</h2>
           <p className={styles.sectionLead}>
             A real service, not a mock-up. This page is a simulation of the account, not of the software.
           </p>
-        </div>
+        </Reveal>
 
+        <Reveal>
         <table className={styles.stackTable}>
           <thead className={styles.srOnly}>
             <tr>
@@ -72,6 +74,7 @@ export default function Stack() {
             ))}
           </tbody>
         </table>
+        </Reveal>
 
         <div className={styles.runIt}>
           <div>

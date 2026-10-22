@@ -1,3 +1,4 @@
+import Reveal from "./Reveal";
 import styles from "./landing.module.css";
 
 const GUARANTEES = [
@@ -39,7 +40,7 @@ export default function Safety() {
           </dl>
         </div>
 
-        <figure className={styles.codeFigure}>
+        <Reveal as="figure" delay={120} className={styles.codeFigure}>
           <figcaption className={styles.codeCaption}>backend/app/actions/proposals.py (abridged)</figcaption>
           <pre className={styles.codeBlock}>
             <code>{`def propose_action(action_store, agent_id,
@@ -68,7 +69,7 @@ export default function Safety() {
   "result": null          // set after execution
 }`}</code>
           </pre>
-        </figure>
+        </Reveal>
       </div>
     </section>
   );

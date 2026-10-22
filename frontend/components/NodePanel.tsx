@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import type { GraphNode } from "@/lib/types";
 
 import styles from "./NodePanel.module.css";
@@ -35,6 +37,12 @@ export default function NodePanel({ node, onClose }: NodePanelProps) {
         <dd>{node.cost_7d === null ? "—" : `$${node.cost_7d.toFixed(2)}`}</dd>
         <dt>{metricLabel}</dt>
         <dd>{node.last_metric_snapshot ? node.last_metric_snapshot.value.toFixed(1) : "—"}</dd>
+        {Object.entries(node.tags).map(([key, value]) => (
+          <Fragment key={key}>
+            <dt>{key}</dt>
+            <dd>{value}</dd>
+          </Fragment>
+        ))}
         <dt>Node id</dt>
         <dd className={styles.code}>{node.node_id}</dd>
       </dl>

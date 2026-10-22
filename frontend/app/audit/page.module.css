@@ -66,3 +66,9 @@
   color: var(--text-tertiary);
   font-weight: 500;
 }
+
+@media (max-width: 640px) {
+  .content {
+    padding: var(--space-5) var(--space-4);
+  }
+}

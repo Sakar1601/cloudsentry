@@ -1,3 +1,4 @@
+import Reveal from "./Reveal";
 import styles from "./landing.module.css";
 
 interface AgentRow {
@@ -60,14 +61,15 @@ export default function Agents() {
   return (
     <section id="agents" className={`${styles.section} ${styles.sectionAlt}`}>
       <div className={styles.container}>
-        <div className={styles.sectionHead}>
+        <Reveal className={styles.sectionHead}>
           <h2 className={styles.h2}>Three agents, each with a narrow job.</h2>
           <p className={styles.sectionLead}>
             Each agent is its own Claude tool-use loop on its own cadence, with a toolset limited to what its job
             needs. None of them can change anything on their own.
           </p>
-        </div>
+        </Reveal>
 
+        <Reveal>
         <div className={styles.agentGrid} role="table" aria-label="What each agent does">
           <div className={styles.agentHeadRow} role="row">
             <span role="columnheader">
@@ -93,6 +95,7 @@ export default function Agents() {
             </div>
           ))}
         </div>
+        </Reveal>
       </div>
     </section>
   );

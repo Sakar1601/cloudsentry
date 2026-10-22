@@ -1,3 +1,4 @@
+import Reveal from "./Reveal";
 import styles from "./landing.module.css";
 
 // Hand-drawn system diagram. Coordinates are in a 1000×560 viewBox; the
@@ -16,14 +17,15 @@ export default function Architecture() {
   return (
     <section id="architecture" className={styles.section}>
       <div className={styles.container}>
-        <div className={styles.sectionHead}>
+        <Reveal className={styles.sectionHead}>
           <h2 className={styles.h2}>How the pieces fit.</h2>
           <p className={styles.sectionLead}>
             Reads flow freely. The only path that writes to AWS is the dashed one, and it starts with a person clicking
             approve.
           </p>
-        </div>
+        </Reveal>
 
+        <Reveal>
         <div className={styles.diagramScroll}>
           <svg
             className={styles.diagram}
@@ -120,6 +122,7 @@ export default function Architecture() {
             <text x="727" y="449" className={styles.dNote} textAnchor="middle">read</text>
           </svg>
         </div>
+        </Reveal>
       </div>
     </section>
   );

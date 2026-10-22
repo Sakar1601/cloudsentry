@@ -64,6 +64,8 @@ export class DemoEngine {
   private actions: PendingAction[] = [];
   private builds = 0;
   private incidents = 0;
+  /** Effects of approved actions, re-applied on every rebuild so they persist. */
+  private effects: Record<string, { stopped?: boolean; resized?: string; tightened?: boolean }> = {};
   private history: Record<string, Record<string, number[]>> = { cost: {}, performance: {}, security: {} };
   private proposed = new Set<string>();
   private timers: ReturnType<typeof setTimeout>[] = [];
@@ -87,6 +89,7 @@ export class DemoEngine {
     if (!action) throw new Error("Action not found");
     if (action.status !== "pending") throw new Error(`Action already ${action.status}`);
     action.status = decision === "approve" ? "approved" : "rejected";
+    if (decision === "approve") this.applyEffect(action);
     action.resolved_at = new Date().toISOString();
     action.result =
       decision === "approve"
@@ -113,6 +116,15 @@ export class DemoEngine {
     this.later(0, () => this.runAgent("cost", "ec2:i-0a1b2c3d4e5f60003"));
     this.later(1400, () => this.runAgent("performance", performance));
     this.later(2800, () => this.runAgent("security", security));
+  }
+
+  /** An approved action changes the simulated account, like the real executor would. */
+  private applyEffect(action: PendingAction) {
+    const effect = (this.effects[action.node_id] ??= {});
+    if (action.tool_name === "stop_ec2_instance") effect.stopped = true;
+    if (action.tool_name === "resize_ec2_instance") effect.resized = String(action.params.new_instance_type);
+    if (action.tool_name === "tighten_iam_policy") effect.tightened = true;
+    this.pollOnce();
   }
 
   subscribe(listener: Listener): () => void {
@@ -161,16 +173,27 @@ export class DemoEngine {
     const now = new Date().toISOString();
     const nodes: Record<string, GraphNode> = {};
     for (const [id, type, name, state, tags, baseCost, baseMetric] of NODES) {
+      const effect = this.effects[id] ?? {};
       let cost = baseCost * rand(0.97, 1.03);
       let metric = baseMetric * rand(0.9, 1.1);
-      if (spike && SPIKY_COST.has(id)) cost *= 2.2;
-      if (spike && SPIKY_METRIC.has(id)) metric *= 2.6;
+      const stopped = effect.stopped === true;
+      if (!stopped && spike && SPIKY_COST.has(id)) cost *= 2.2;
+      if (!stopped && spike && SPIKY_METRIC.has(id)) metric *= effect.resized ? 1.2 : 2.6;
+      if (stopped) {
+        cost *= 0.08; // a stopped instance only pays for its volumes
+        metric = 0;
+      } else if (effect.resized) {
+        metric *= 0.45; // the same load on a larger instance
+      }
+      const nodeTags = { ...tags };
+      if (effect.resized) nodeTags.InstanceType = effect.resized;
+      if (effect.tightened) nodeTags.IamPolicy = "scoped";
       nodes[id] = {
         node_id: id,
         resource_type: type,
         name,
-        state,
-        tags,
+        state: stopped ? "stopped" : state,
+        tags: nodeTags,
         cost_7d: Math.round(cost * 100) / 100,
         last_metric_snapshot: { timestamp: now, value: Math.round(metric * 100) / 100 },
       };
@@ -236,6 +259,7 @@ export class DemoEngine {
     const instanceId = node.node_id.split(":")[1];
     let tool: string | null = null;
     let params: Record<string, unknown> = {};
+    if (node.resource_type === "ec2" && node.state !== "running") return null;
     if (agent === "cost" && node.resource_type === "ec2") {
       tool = "stop_ec2_instance";
       params = { instance_id: instanceId };

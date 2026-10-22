@@ -8,10 +8,13 @@ import Architecture from "./Architecture";
 import Flow from "./Flow";
 import Safety from "./Safety";
 import Stack from "./Stack";
+import Why from "./Why";
 import styles from "./landing.module.css";
 
 const REPO_URL = "https://github.com/Sakar1601/cloudsentry";
 const AUTHOR_URL = "https://github.com/Sakar1601";
+
+const HEADLINE = ["Your", "AWS", "account,", "watched", "by", "three", "AI", "agents."];
 
 export default function Landing() {
   return (
@@ -26,6 +29,7 @@ export default function Landing() {
             <Logo size={38} />
           </Link>
           <nav className={styles.navLinks} aria-label="Sections">
+            <a href="#why">Why it's different</a>
             <a href="#flow">How it works</a>
             <a href="#agents">Agents</a>
             <a href="#safety">Safety</a>
@@ -46,7 +50,18 @@ export default function Landing() {
       <main id="main">
         <section className={styles.hero}>
           <div className={styles.container}>
-            <h1 className={styles.h1}>Your AWS account, watched by three AI&nbsp;agents.</h1>
+            <h1 className={styles.h1} aria-label="Your AWS account, watched by three AI agents.">
+              {HEADLINE.map((word, i) => (
+                <span
+                  key={i}
+                  className={styles.heroWord}
+                  style={{ animationDelay: `${160 + i * 90}ms` }}
+                  aria-hidden="true"
+                >
+                  {word}
+                </span>
+              ))}
+            </h1>
             <p className={styles.lead}>
               Cloudsentry draws your cloud as a live graph. Cost, Performance and Security agents move across it, call
               real AWS APIs, explain what they find, and propose the fix. Nothing changes until a human approves it.
@@ -69,7 +84,9 @@ export default function Landing() {
 
         <section id="live" className={styles.stageSection} aria-label="Live demo">
           <div className={`${styles.container} ${styles.stageWrap}`}>
-            <DemoStage variant="hero" />
+            <div className={styles.frame}>
+              <DemoStage variant="hero" />
+            </div>
             <p className={styles.stageCaption}>
               This is the real interface running on a simulated account, entirely in your browser. Click a node,
               approve or reject a proposal, or press <strong>Trigger an incident</strong> to skip the wait.{" "}
@@ -78,6 +95,7 @@ export default function Landing() {
           </div>
         </section>
 
+        <Why />
         <Flow />
         <Agents />
         <Safety />

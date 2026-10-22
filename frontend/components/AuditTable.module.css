@@ -7,7 +7,6 @@
 
 .table {
   width: 100%;
-  min-width: 860px;
   border-collapse: collapse;
   font-size: var(--text-sm);
 }
@@ -192,4 +191,45 @@
 
 .table td:nth-child(2) {
   white-space: nowrap;
+}
+
+.meta {
+  display: none;
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+
+.meta span {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  margin-left: var(--space-2);
+}
+
+.meta span:first-child {
+  margin-left: 0;
+}
+
+@media (max-width: 760px) {
+  .colCreated,
+  .colNode,
+  .colResolved {
+    display: none;
+  }
+
+  .table td.mono {
+    white-space: nowrap;
+  }
+
+  .meta {
+    display: block;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--space-3) var(--space-2);
+  }
 }

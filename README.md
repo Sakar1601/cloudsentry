@@ -23,6 +23,30 @@ It runs entirely in your browser against a simulated account: no install, no sig
 
 *(The app screenshot is the real FastAPI backend in demo mode, so it shows no real account data.)*
 
+## What makes it different
+
+Many tools help you understand an AWS account; most leave the investigating and the fixing to you.
+
+| | Dashboards and alerts | Cost and security scanners | Chat copilots | **Cloudsentry** |
+|---|---|---|---|---|
+| How a problem is found | You watch charts or wait for a threshold | A periodic report | You ask the right question | Agents notice what deviates from a resource's own baseline |
+| Who investigates | You | You triage the list | The model, once asked | Three specialist agents, continuously |
+| Where the answer appears | Across consoles | A list per domain | A chat transcript | On the resource, in one graph |
+| How a fix happens | By hand | By hand or by rule | You copy a suggestion | One click on the exact change, gated and logged |
+
+*Typical behavior of each category, not a review of any specific product.*
+
+- **The investigation happens on the map.** Agents travel to a resource; findings and proposals are pinned to it.
+- **The model cannot pull the trigger.** Action tools only record intent; one endpoint executes, behind a human click, and
+  the task role can only write to instances tagged for it.
+- **Cost, performance and security share one graph** of real relationships (VPC, env-var references, IAM access).
+- **Anomalies are relative, not hand-tuned:** more than 1.5× a resource's own rolling baseline.
+- **Every decision leaves evidence:** exact parameters, reasoning, outcome, including failures.
+- **It runs in your account:** one service you deploy with Terraform; only the tool results an agent requests go to the
+  Claude API.
+
+It is deliberately scoped: one account, one operator, six AWS services, in-memory graph, demo-grade IAM guardrails.
+
 ## How a cycle works
 
 1. **Observe.** A poller reads the account every 30 s, builds a graph (nodes: EC2, Lambda, DynamoDB; edges: shared

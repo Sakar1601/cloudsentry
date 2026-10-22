@@ -2,8 +2,11 @@
 
 import ActionCard from "@/components/ActionCard";
 import ActivityFeed from "@/components/ActivityFeed";
+import AnimatedNumber from "@/components/AnimatedNumber";
+import OutcomeCard from "@/components/OutcomeCard";
 import type { ActivityItem, ConnectionStatus, GraphNode, PendingAction } from "@/lib/types";
 import { useNow } from "@/lib/useNow";
+import type { ResolvedEntry } from "@/lib/useRecentlyResolved";
 
 import styles from "./AppSidebar.module.css";
 
@@ -19,9 +22,12 @@ export interface AppSidebarProps {
   activity: ActivityItem[];
   connection: ConnectionStatus;
   simulated?: boolean;
+  /** Actions resolved a moment ago, shown with what happened. */
+  resolved?: ResolvedEntry[];
+  onDismissResolved?: (id: string) => void;
 }
 
-export default function AppSidebar({ nodes, actions, activity, connection, simulated }: AppSidebarProps) {
+export default function AppSidebar({ nodes, actions, activity, connection, simulated, resolved = [], onDismissResolved }: AppSidebarProps) {
   const now = useNow();
   const nodeList = Object.values(nodes);
   const pending = Object.values(actions).filter((a) => a.status === "pending");
@@ -37,15 +43,21 @@ export default function AppSidebar({ nodes, actions, activity, connection, simul
       <dl className={styles.summary}>
         <div>
           <dt>Resources</dt>
-          <dd>{nodeList.length}</dd>
+          <dd>
+            <AnimatedNumber value={nodeList.length} />
+          </dd>
         </div>
         <div>
           <dt>7-day cost</dt>
-          <dd>${totalCost.toFixed(0)}</dd>
+          <dd>
+            <AnimatedNumber value={totalCost} format={(n) => `$${Math.round(n)}`} />
+          </dd>
         </div>
         <div>
           <dt>Need approval</dt>
-          <dd className={pending.length > 0 ? styles.attention : undefined}>{pending.length}</dd>
+          <dd className={pending.length > 0 ? styles.attention : undefined}>
+            <AnimatedNumber value={pending.length} />
+          </dd>
         </div>
       </dl>
 
@@ -53,17 +65,30 @@ export default function AppSidebar({ nodes, actions, activity, connection, simul
         <h2 id="approvals-heading" className={styles.heading}>
           Awaiting your approval
         </h2>
-        {pending.length === 0 ? (
+        {resolved.length > 0 && (
+          <div className={styles.cards} aria-live="polite">
+            {resolved.map((entry) => (
+              <OutcomeCard
+                key={`out-${entry.action.id}`}
+                action={entry.action}
+                onDismiss={() => onDismissResolved?.(entry.action.id)}
+              />
+            ))}
+          </div>
+        )}
+        {pending.length === 0 && resolved.length === 0 ? (
           <p className={styles.empty}>
             Nothing waiting. When an agent proposes a change, the exact action appears here and nothing runs until
             you approve it.
           </p>
         ) : (
-          <div className={styles.cards}>
-            {pending.map((action) => (
-              <ActionCard key={action.id} action={action} x={0} y={0} docked />
-            ))}
-          </div>
+          pending.length > 0 && (
+            <div className={styles.cards}>
+              {pending.map((action) => (
+                <ActionCard key={action.id} action={action} x={0} y={0} docked />
+              ))}
+            </div>
+          )
         )}
       </section>
 

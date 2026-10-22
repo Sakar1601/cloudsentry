@@ -33,7 +33,7 @@ describe("GraphCanvas", () => {
 
     const call = mockForceGraph2D.mock.calls[0][0];
     expect(call.graphData.nodes).toEqual([
-      { id: "ec2:i-1", resourceType: "ec2", name: "web", color: "#4f8fd1", val: expect.any(Number) },
+      { id: "ec2:i-1", resourceType: "ec2", name: "web", stopped: false, color: "#5aa8ff", val: expect.any(Number) },
     ]);
     expect(call.graphData.links).toEqual([
       { source: "ec2:i-1", target: "ec2:i-2", relation: "same_vpc" },

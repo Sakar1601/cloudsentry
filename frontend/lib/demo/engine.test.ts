@@ -43,3 +43,49 @@ describe("DemoEngine", () => {
     expect(listener).not.toHaveBeenCalled();
   });
 });
+
+describe("DemoEngine approvals change the account", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("an approved stop makes the instance stopped, and it stays stopped across polls", () => {
+    const engine = new DemoEngine();
+    const updates: any[] = [];
+    engine.subscribe((m) => m.type === "node_updated" && updates.push(m.node));
+    engine.triggerIncident();
+    vi.advanceTimersByTime(10_000);
+
+    const stop = engine.getActions().find((a) => a.tool_name === "stop_ec2_instance" && a.status === "pending")!;
+    engine.resolve(stop.id, "approve");
+
+    expect(engine.getGraph().nodes[stop.node_id].state).toBe("stopped");
+    expect(engine.getGraph().nodes[stop.node_id].last_metric_snapshot?.value).toBe(0);
+
+    vi.advanceTimersByTime(20_000); // several more polls
+    expect(engine.getGraph().nodes[stop.node_id].state).toBe("stopped");
+  });
+
+  it("a rejection leaves the account untouched", () => {
+    const engine = new DemoEngine();
+    engine.subscribe(() => {});
+    engine.triggerIncident();
+    vi.advanceTimersByTime(10_000);
+
+    const stop = engine.getActions().find((a) => a.tool_name === "stop_ec2_instance" && a.status === "pending")!;
+    engine.resolve(stop.id, "reject");
+
+    expect(engine.getGraph().nodes[stop.node_id].state).toBe("running");
+  });
+
+  it("an approved resize tags the new instance type and lowers load", () => {
+    const engine = new DemoEngine();
+    engine.subscribe(() => {});
+    engine.triggerIncident();
+    vi.advanceTimersByTime(10_000);
+
+    const resize = engine.getActions().find((a) => a.tool_name === "resize_ec2_instance" && a.status === "pending")!;
+    engine.resolve(resize.id, "approve");
+
+    expect(engine.getGraph().nodes[resize.node_id].tags.InstanceType).toBe("m5.xlarge");
+  });
+});

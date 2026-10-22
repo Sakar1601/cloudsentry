@@ -10,24 +10,30 @@
 
 :root {
   /* Surfaces */
-  --bg: #0a0d12;
-  --bg-elevated: #12161d;
-  --bg-elevated-2: #1a1f28;
-  --bg-hover: #1f2530;
+  --bg: #06080c;
+  --bg-elevated: #0b0f16;
+  --bg-elevated-2: #111722;
+  --bg-hover: #171e2b;
 
   /* Borders */
-  --border: #232a35;
-  --border-strong: #333a47;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
 
   /* Text */
-  --text-primary: #e6e9ef;
-  --text-secondary: #8b93a3;
-  --text-tertiary: #5a6272;
+  --text-primary: #eef2f8;
+  --text-secondary: #9aa4b6;
+  --text-tertiary: #69748a;
 
   /* Accent (primary actions, focus, links, selection) */
-  --accent: #4da3ff;
-  --accent-hover: #6bb4ff;
-  --accent-muted: rgba(77, 163, 255, 0.14);
+  --accent: #5aa8ff;
+  --accent-hover: #80beff;
+  --accent-muted: rgba(90, 168, 255, 0.14);
+
+  /* Second accent + signature gradient (buttons, focus moments; never text) */
+  --accent-2: #8f7bff;
+  --gradient-accent: linear-gradient(135deg, #5aa8ff 0%, #8f7bff 100%);
+  --glow-accent: 0 8px 32px -6px rgba(90, 168, 255, 0.55);
+  --edge-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
   /* Semantic status */
   --status-pending: #f5b942;
@@ -45,9 +51,9 @@
   --agent-security: #f2545b;
 
   /* Resource-node colors — calm, desaturated structural layer */
-  --node-ec2: #4f8fd1;
-  --node-lambda: #5fb894;
-  --node-dynamodb: #c98f5f;
+  --node-ec2: #5aa8ff;
+  --node-lambda: #46d9a0;
+  --node-dynamodb: #e2a66b;
   --node-default: #6b7280;
 
   /* Type */
@@ -74,14 +80,14 @@
 
   /* Shape */
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
   --radius-full: 999px;
 
   /* Elevation */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 24px 60px -12px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
 
   /* Motion */
   --transition-fast: 150ms ease;
@@ -196,4 +202,11 @@ html {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Animatable angle for the glowing frame around the hero product window. */
+@property --frame-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
 }
