@@ -37,7 +37,7 @@ jobs:
     strategy: { matrix: { dir: [iam, ecs] } }
     steps:
       - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
       - run: terraform init -backend=false && terraform validate
         working-directory: infra/terraform/${{ matrix.dir }}
 
