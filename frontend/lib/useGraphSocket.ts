@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { connectStream, getActions, getGraph } from "./api";
+
 import type {
   AgentMoveState,
   FindingState,
@@ -11,15 +13,12 @@ import type {
   PendingAction,
 } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-
 function edgeKey(edge: GraphEdge): string {
   return `${edge.source}|${edge.target}|${edge.relation}`;
 }
 
 async function fetchActions(): Promise<Record<string, PendingAction>> {
-  const response = await fetch(`${API_BASE_URL}/actions`);
-  const actions: PendingAction[] = await response.json();
+  const actions = await getActions();
   const byId: Record<string, PendingAction> = {};
   for (const action of actions) {
     byId[action.id] = action;
@@ -34,7 +33,7 @@ export function useGraphSocket(): GraphSocketState {
   const [findings, setFindings] = useState<Record<string, FindingState>>({});
   const [actions, setActions] = useState<Record<string, PendingAction>>({});
   const [loading, setLoading] = useState(true);
-  const socketRef = useRef<WebSocket | null>(null);
+  const disconnectRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,27 +81,24 @@ export function useGraphSocket(): GraphSocketState {
     }
 
     async function init() {
-      const response = await fetch(`${API_BASE_URL}/graph`);
-      const graph: { nodes: Record<string, GraphNode>; edges: GraphEdge[] } = await response.json();
+      const graph = await getGraph();
       if (cancelled) return;
 
       setNodes(graph.nodes);
       setEdges(graph.edges);
       setLoading(false);
-
-      const wsUrl = `${API_BASE_URL.replace(/^http/, "ws")}/graph/stream`;
-      const socket = new WebSocket(wsUrl);
-      socketRef.current = socket;
-      socket.addEventListener("message", (event: MessageEvent) => {
-        handleMessage(JSON.parse(event.data));
+      fetchActions().then((byId) => {
+        if (!cancelled) setActions(byId);
       });
+
+      disconnectRef.current = connectStream(handleMessage);
     }
 
     init();
 
     return () => {
       cancelled = true;
-      socketRef.current?.close();
+      disconnectRef.current?.();
     };
   }, []);
 

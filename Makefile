@@ -1,10 +1,13 @@
-.PHONY: help demo up install test lint backend frontend
+.PHONY: help demo static install test backend frontend
 
 help:  ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-10s %s\n", $$1, $$2}'
 
 demo:  ## run the whole app in demo mode via Docker (no credentials) -> :3000
 	docker compose up --build
+
+static:  ## build the backend-less static demo site into frontend/out
+	cd frontend && npm run build:demo
 
 install:  ## install backend + frontend deps locally
 	cd backend && python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'

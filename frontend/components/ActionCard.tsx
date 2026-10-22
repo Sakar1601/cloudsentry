@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 
+import { resolveAction } from "@/lib/api";
 import type { PendingAction } from "@/lib/types";
 
 import styles from "./ActionCard.module.css";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 function resolvedClass(status: string): string {
   if (status === "approved") return styles.resolvedApproved;
@@ -26,7 +25,7 @@ export default function ActionCard({ action, x, y }: ActionCardProps) {
   async function resolve(decision: "approve" | "reject") {
     setSubmitting(true);
     try {
-      await fetch(`${API_BASE_URL}/actions/${action.id}/${decision}`, { method: "POST" });
+      await resolveAction(action.id, decision);
     } finally {
       setSubmitting(false);
     }

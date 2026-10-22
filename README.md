@@ -13,7 +13,16 @@ until a human clicks **Approve**; every decision lands in an audit log.
 |---|
 | ![Audit log](docs/images/audit.png) |
 
-## Try it in 30 seconds (no AWS account, no API key)
+## Try it (no AWS account, no API key)
+
+**Static demo — no server at all.** The whole UI, with a simulated AWS account and agents running in
+your browser, builds to plain static files:
+
+```bash
+make static && npx serve frontend/out        # or push to GitHub: Pages deploys it (see below)
+```
+
+**Full stack in Docker** — the real backend in demo mode:
 
 ```bash
 docker compose up --build        # then open http://localhost:3000
@@ -22,6 +31,8 @@ docker compose up --build        # then open http://localhost:3000
 This starts **demo mode**: a fictional AWS account and scripted agents run through the *same*
 poller, WebSocket stream, action store and approval API as production — only the AWS and LLM
 calls are swapped out (`backend/app/demo/`). Approving an action is simulated.
+The static build uses a TypeScript port of the same scenario (`frontend/lib/demo/engine.ts`) behind
+`frontend/lib/api.ts`, selected by `NEXT_PUBLIC_STATIC_DEMO=1`.
 
 Without Docker: `make install`, then `make backend` and `make frontend` in two terminals.
 
@@ -69,7 +80,7 @@ Approving an action in live mode **really executes it** — use a sandbox accoun
 ```
 backend/   FastAPI app: graph/ (poller, diff, edges), agents/, actions/ (store, executor),
            tools/ (boto3 wrappers), demo/ (fixture account + scripted agents), tests/ (118)
-frontend/  Next.js 16 + TypeScript: graph canvas, agent overlays, action cards, audit page (19 tests)
+frontend/  Next.js 16 + TypeScript: graph canvas, agent overlays, action cards, audit page (22 tests)
 infra/     Terraform: iam/ (task role), ecs/ (Fargate service)
 docs/      design spec, screenshots
 ```

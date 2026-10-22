@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 
 import AuditTable from "@/components/AuditTable";
 import Header from "@/components/Header";
+import { getActions } from "@/lib/api";
 import type { PendingAction } from "@/lib/types";
 
 import styles from "./page.module.css";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 export default function AuditPage() {
   const [actions, setActions] = useState<PendingAction[]>([]);
@@ -16,9 +15,7 @@ export default function AuditPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE_URL}/actions`)
-      .then((response) => response.json())
-      .then((data: PendingAction[]) => {
+    getActions().then((data: PendingAction[]) => {
         if (!cancelled) {
           setActions(data);
           setLoading(false);

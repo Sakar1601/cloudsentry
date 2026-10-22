@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { STATIC_DEMO } from "@/lib/api";
+
 import styles from "./Header.module.css";
 
 const NAV_ITEMS: { href: string; label: string; id: "graph" | "audit" }[] = [
@@ -18,6 +20,11 @@ export default function Header({ active }: HeaderProps) {
         <span className={styles.mark} aria-hidden="true" />
         <span className={styles.title}>Cloudsentry</span>
       </Link>
+      {STATIC_DEMO && (
+        <span className={styles.demoBadge} title="Runs entirely in your browser against a simulated AWS account">
+          Interactive demo · simulated AWS account
+        </span>
+      )}
       <nav className={styles.nav}>
         {NAV_ITEMS.map((item) => (
           <Link
