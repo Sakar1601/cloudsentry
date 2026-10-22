@@ -10,3 +10,14 @@
   letter-spacing: -0.02em;
   line-height: 1;
 }
+
+/* Very small phones: tighten the lockup so it never pushes the nav off-screen. */
+@media (max-width: 400px) {
+  .word {
+    font-size: 21px !important;
+  }
+
+  .logo {
+    gap: 8px !important;
+  }
+}
