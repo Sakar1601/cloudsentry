@@ -1,14 +1,14 @@
 .bubble {
   position: absolute;
   transform: translate(-50%, calc(-100% - 18px));
-  max-width: 260px;
-  padding: var(--space-3) var(--space-4);
+  width: 224px;
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   background: var(--bg-elevated-2);
   border: 1px solid var(--border-strong);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   line-height: 1.45;
   box-shadow: var(--shadow-lg);
   z-index: 3;
@@ -26,6 +26,22 @@
   background: var(--bg-elevated-2);
   border-right: 1px solid var(--border-strong);
   border-bottom: 1px solid var(--border-strong);
+}
+
+.text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Full text on hover/focus; the bubble stays small the rest of the time. */
+.bubble:hover {
+  z-index: 6;
+}
+
+.bubble:hover .text {
+  -webkit-line-clamp: unset;
 }
 
 .agentLabel {
@@ -47,5 +63,27 @@
   to {
     opacity: 1;
     transform: translate(-50%, calc(-100% - 18px));
+  }
+}
+
+.dim {
+  opacity: 0.8;
+}
+
+.dim .text {
+  -webkit-line-clamp: 1;
+}
+
+.dim:hover {
+  opacity: 1;
+}
+
+.dim:hover .text {
+  -webkit-line-clamp: unset;
+}
+
+@media (max-width: 700px) {
+  .dim {
+    display: none;
   }
 }

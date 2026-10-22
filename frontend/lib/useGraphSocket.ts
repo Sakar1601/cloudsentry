@@ -10,6 +10,7 @@ import type {
   GraphEdge,
   GraphNode,
   GraphSocketState,
+  LastEvent,
   PendingAction,
 } from "./types";
 
@@ -33,12 +34,26 @@ export function useGraphSocket(): GraphSocketState {
   const [findings, setFindings] = useState<Record<string, FindingState>>({});
   const [actions, setActions] = useState<Record<string, PendingAction>>({});
   const [loading, setLoading] = useState(true);
+  const [lastEvent, setLastEvent] = useState<LastEvent | null>(null);
   const disconnectRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     function handleMessage(message: any) {
+      if (
+        message.type === "agent_move" ||
+        message.type === "finding" ||
+        message.type === "action_proposed" ||
+        message.type === "action_resolved"
+      ) {
+        setLastEvent({
+          type: message.type,
+          agentId: message.agent_id,
+          nodeId: message.node_id ?? message.target_node_id,
+          at: Date.now(),
+        });
+      }
       switch (message.type) {
         case "node_added":
         case "node_updated":
@@ -102,5 +117,5 @@ export function useGraphSocket(): GraphSocketState {
     };
   }, []);
 
-  return { nodes, edges, agents, findings, actions, loading };
+  return { nodes, edges, agents, findings, actions, loading, lastEvent };
 }

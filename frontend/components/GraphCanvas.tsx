@@ -44,9 +44,10 @@ export interface GraphCanvasProps {
   nodes: Record<string, GraphNode>;
   edges: GraphEdge[];
   onNodePositions?: (positions: Record<string, NodePosition>) => void;
+  onNodeClick?: (nodeId: string | null) => void;
 }
 
-export default function GraphCanvas({ nodes, edges, onNodePositions }: GraphCanvasProps) {
+export default function GraphCanvas({ nodes, edges, onNodePositions, onNodeClick }: GraphCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<any>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
@@ -133,7 +134,7 @@ export default function GraphCanvas({ nodes, edges, onNodePositions }: GraphCanv
           nodeVal={(node: any) => node.val}
           nodeLabel={(node: any) => node.name}
           nodeRelSize={4}
-          maxZoom={2}
+          maxZoom={3}
           nodeCanvasObjectMode={() => "after"}
           nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, scale: number) => {
             ctx.font = `${11 / scale}px Inter, sans-serif`;
@@ -142,9 +143,11 @@ export default function GraphCanvas({ nodes, edges, onNodePositions }: GraphCanv
             ctx.fillText(node.name, node.x, node.y + 4 * Math.sqrt(node.val) + 12 / scale);
           }}
           autoPauseRedraw={false}
+          onNodeClick={(node: any) => onNodeClick?.(node.id)}
+          onBackgroundClick={() => onNodeClick?.(null)}
           cooldownTicks={120}
           onEngineTick={configureForces}
-          onEngineStop={() => fgRef.current?.zoomToFit(400, 140)}
+          onEngineStop={() => fgRef.current?.zoomToFit(400, size && size.width < 640 ? 50 : 100)}
           linkColor={() => LINK_COLOR}
           linkWidth={1.5}
           linkLabel={(link: any) => link.relation}

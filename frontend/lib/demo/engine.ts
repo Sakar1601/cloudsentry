@@ -63,6 +63,7 @@ export class DemoEngine {
   private edges: GraphEdge[] = EDGES.map(([source, target, relation]) => ({ source, target, relation }));
   private actions: PendingAction[] = [];
   private builds = 0;
+  private incidents = 0;
   private history: Record<string, Record<string, number[]>> = { cost: {}, performance: {}, security: {} };
   private proposed = new Set<string>();
   private timers: ReturnType<typeof setTimeout>[] = [];
@@ -93,6 +94,25 @@ export class DemoEngine {
         : null;
     this.emit({ type: "action_resolved", action_id: id, status: action.status });
     return action;
+  }
+
+  /**
+   * Spike cost and latency right now and send each agent to a node, so a
+   * visitor sees a full detect → investigate → propose cycle immediately
+   * instead of waiting for the next scheduled spike.
+   */
+  triggerIncident(): void {
+    this.pollOnce(true);
+    const lambdas = Object.values(this.nodes)
+      .filter((n) => n.resource_type === "lambda")
+      .map((n) => n.node_id)
+      .sort();
+    const security = lambdas[this.incidents % lambdas.length];
+    const performance = this.incidents % 2 === 0 ? "ec2:i-0a1b2c3d4e5f60001" : "ec2:i-0a1b2c3d4e5f60002";
+    this.incidents += 1;
+    this.later(0, () => this.runAgent("cost", "ec2:i-0a1b2c3d4e5f60003"));
+    this.later(1400, () => this.runAgent("performance", performance));
+    this.later(2800, () => this.runAgent("security", security));
   }
 
   subscribe(listener: Listener): () => void {
@@ -135,9 +155,9 @@ export class DemoEngine {
     this.timers = [];
   }
 
-  private build(): Record<string, GraphNode> {
+  private build(forceSpike = false): Record<string, GraphNode> {
     this.builds += 1;
-    const spike = this.builds % SPIKE_EVERY === 0;
+    const spike = forceSpike || this.builds % SPIKE_EVERY === 0;
     const now = new Date().toISOString();
     const nodes: Record<string, GraphNode> = {};
     for (const [id, type, name, state, tags, baseCost, baseMetric] of NODES) {
@@ -158,8 +178,8 @@ export class DemoEngine {
     return nodes;
   }
 
-  private pollOnce() {
-    this.nodes = this.build();
+  private pollOnce(forceSpike = false) {
+    this.nodes = this.build(forceSpike);
     for (const node of Object.values(this.nodes)) this.emit({ type: "node_updated", node });
   }
 
@@ -192,23 +212,27 @@ export class DemoEngine {
     return lambdas[cursor];
   }
 
-  private runAgent(agent: string) {
-    const nodeId = this.select(agent);
+  private runAgent(agent: string, forcedNodeId?: string) {
+    const nodeId = forcedNodeId ?? this.select(agent);
     if (!nodeId) return;
     const node = this.nodes[nodeId];
     this.emit({ type: "agent_move", agent_id: agent, target_node_id: nodeId });
 
     this.later(rand(2000, 4000), () => {
       const text = FINDINGS[agent](node);
-      const action = this.maybePropose(agent, node, text);
+      const action = this.maybePropose(agent, node, text, forcedNodeId !== undefined);
       if (action) this.emit({ type: "action_proposed", agent_id: agent, node_id: nodeId, action_id: action.id });
       this.emit({ type: "finding", agent_id: agent, node_id: nodeId, text });
     });
   }
 
-  private maybePropose(agent: string, node: GraphNode, reasoning: string): PendingAction | null {
+  private maybePropose(agent: string, node: GraphNode, reasoning: string, force = false): PendingAction | null {
     const key = `${agent}|${node.node_id}`;
-    if (this.proposed.has(key)) return null;
+    if (force) {
+      if (this.actions.some((a) => a.status === "pending" && a.agent_id === agent && a.node_id === node.node_id)) return null;
+    } else if (this.proposed.has(key)) {
+      return null;
+    }
     const instanceId = node.node_id.split(":")[1];
     let tool: string | null = null;
     let params: Record<string, unknown> = {};

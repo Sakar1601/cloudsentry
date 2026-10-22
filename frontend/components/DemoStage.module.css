@@ -1,0 +1,193 @@
+.stage {
+  display: flex;
+  background: var(--bg);
+  min-height: 0;
+}
+
+.app {
+  flex: 1;
+}
+
+.hero {
+  height: min(680px, 78vh);
+  min-height: 520px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 2px 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+.canvasArea {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(139, 147, 163, 0.12) 1px, transparent 0) 0 0 / 28px 28px,
+    var(--bg);
+}
+
+.status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.statusInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.statusTitle {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent);
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.legend {
+  position: absolute;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background: rgba(18, 22, 29, 0.92);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legendRow dt {
+  color: var(--text-tertiary);
+}
+
+.legendRow dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.legendRow dd .swatch:not(:first-child) {
+  margin-left: var(--space-2);
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+.legendNote {
+  color: var(--text-tertiary);
+}
+
+.incident {
+  position: absolute;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 4;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated-2);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.incident:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+
+  .canvasArea {
+    height: 560px;
+    flex: none;
+  }
+
+  .legend {
+    display: none;
+  }
+
+  .hero > :first-child {
+    order: 2;
+  }
+}
+
+/* Pending approvals dock down the right edge (a row along the bottom on
+   narrow screens) so cards never cover the graph or each other. */
+.tray {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 4;
+  width: 272px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.tray > * {
+  pointer-events: auto;
+}
+
+.trayNarrow {
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  flex-direction: row;
+  padding: var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+}

@@ -4,13 +4,22 @@ import { STATIC_DEMO } from "@/lib/api";
 
 import styles from "./Header.module.css";
 
-const NAV_ITEMS: { href: string; label: string; id: "graph" | "audit" }[] = [
-  { href: "/", label: "Graph", id: "graph" },
-  { href: "/audit", label: "Audit Log", id: "audit" },
-];
+type NavId = "overview" | "graph" | "audit";
+
+// In the static demo "/" is the explainer and the app lives at /demo.
+const NAV_ITEMS: { href: string; label: string; id: NavId }[] = STATIC_DEMO
+  ? [
+      { href: "/", label: "Overview", id: "overview" },
+      { href: "/demo", label: "Live graph", id: "graph" },
+      { href: "/audit", label: "Audit log", id: "audit" },
+    ]
+  : [
+      { href: "/", label: "Graph", id: "graph" },
+      { href: "/audit", label: "Audit Log", id: "audit" },
+    ];
 
 export interface HeaderProps {
-  active: "graph" | "audit";
+  active: NavId;
 }
 
 export default function Header({ active }: HeaderProps) {

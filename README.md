@@ -9,11 +9,13 @@ until a human clicks **Approve**; every decision lands in an audit log.
 
 **[▶ Live demo](https://sakar1601.github.io/cloudsentry/)** — runs in your browser, nothing to install.
 
-![Live graph with an agent finding](docs/images/graph.png)
+![Landing page](docs/images/landing.png)
 
-| Audit log of every proposed action |
-|---|
-| ![Audit log](docs/images/audit.png) |
+![Live graph: agents investigate, proposals wait for approval](docs/images/graph.png)
+
+| Audit log of every proposed action | Architecture |
+|---|---|
+| ![Audit log](docs/images/audit.png) | ![Architecture](docs/images/architecture.png) |
 
 ## Try it (no AWS account, no API key)
 

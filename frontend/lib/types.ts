@@ -36,6 +36,13 @@ export interface FindingState {
   text: string;
 }
 
+export interface LastEvent {
+  type: string;
+  agentId?: string;
+  nodeId?: string;
+  at: number;
+}
+
 export interface GraphSocketState {
   nodes: Record<string, GraphNode>;
   edges: GraphEdge[];
@@ -43,4 +50,6 @@ export interface GraphSocketState {
   findings: Record<string, FindingState>;
   actions: Record<string, PendingAction>;
   loading: boolean;
+  /** Most recent agent-lifecycle event (move, finding, proposal, resolution). */
+  lastEvent?: LastEvent | null;
 }

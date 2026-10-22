@@ -11,13 +11,15 @@ export interface FindingBubbleProps {
   text: string;
   x: number;
   y: number;
+  /** An older finding: shown as a single line until hovered. */
+  dim?: boolean;
 }
 
-export default function FindingBubble({ agentId, text, x, y }: FindingBubbleProps) {
+export default function FindingBubble({ agentId, text, x, y, dim = false }: FindingBubbleProps) {
   return (
-    <div className={styles.bubble} style={{ left: x, top: y }} data-testid={`finding-bubble-${agentId}`}>
+    <div className={`${styles.bubble} ${dim ? styles.dim : ""}`} style={{ left: x, top: y }} data-testid={`finding-bubble-${agentId}`}>
       <span className={styles.agentLabel}>{AGENT_LABELS[agentId] ?? agentId}</span>
-      {text}
+      <span className={styles.text}>{text}</span>
     </div>
   );
 }

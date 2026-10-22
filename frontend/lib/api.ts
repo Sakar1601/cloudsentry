@@ -41,3 +41,8 @@ export function connectStream(onMessage: (message: any) => void): () => void {
   socket.addEventListener("message", (event: MessageEvent) => onMessage(JSON.parse(event.data)));
   return () => socket.close();
 }
+
+/** Static demo only: make the simulated account misbehave right now. */
+export function triggerIncident(): void {
+  if (STATIC_DEMO) getDemoEngine().triggerIncident();
+}
