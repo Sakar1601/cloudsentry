@@ -21,3 +21,9 @@
     gap: 8px !important;
   }
 }
+
+@media (max-width: 340px) {
+  .word {
+    font-size: 17px !important;
+  }
+}

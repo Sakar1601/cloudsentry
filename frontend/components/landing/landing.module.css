@@ -1121,3 +1121,13 @@
     animation: none;
   }
 }
+
+@media (max-width: 340px) {
+  .navInner {
+    padding: 0 6px 0 8px;
+  }
+
+  .navCta {
+    padding: 7px 10px;
+  }
+}
