@@ -7,7 +7,7 @@ dependencies = [
     "uvicorn[standard]>=0.54.0",
     "boto3>=1.43.114",
     "pydantic>=2.14.1",
-    "anthropic>=0.34",
+    "anthropic>=1.15.0",
     # Transitive dependencies pinned to patched releases (known advisories in earlier versions).
     "urllib3>=2.8.0",
     "certifi>=2026.10.19",
