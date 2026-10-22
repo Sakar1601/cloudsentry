@@ -221,7 +221,18 @@
   }
 
   .table td.mono {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .table td:last-child,
+  .table td:nth-last-child(2) {
     white-space: nowrap;
+  }
+
+  .table th,
+  .table td {
+    font-size: var(--text-xs);
   }
 
   .meta {

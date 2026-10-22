@@ -127,6 +127,8 @@
 }
 
 .navCta {
+  white-space: nowrap;
+  flex-shrink: 0;
   padding: 9px 18px;
   border-radius: 999px;
   background: var(--gradient-accent);
@@ -1077,6 +1079,17 @@
 @media (max-width: 560px) {
   .navGhost {
     display: none;
+  }
+
+  .navInner {
+    gap: var(--space-2);
+    padding: 0 8px 0 12px;
+    height: 54px;
+  }
+
+  .navCta {
+    padding: 8px 14px;
+    font-size: var(--text-xs);
   }
 
   .container {
