@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import DemoStage from "@/components/DemoStage";
+import Logo, { LogoMark } from "@/components/Logo";
 
 import Agents from "./Agents";
 import Architecture from "./Architecture";
@@ -22,8 +23,7 @@ export default function Landing() {
       <header className={styles.nav}>
         <div className={`${styles.container} ${styles.navInner}`}>
           <Link href="/" className={styles.brand}>
-            <span className={styles.mark} aria-hidden="true" />
-            Cloudsentry
+            <Logo size={38} />
           </Link>
           <nav className={styles.navLinks} aria-label="Sections">
             <a href="#flow">How it works</a>
@@ -104,8 +104,8 @@ export default function Landing() {
 
       <footer className={styles.footer}>
         <div className={`${styles.container} ${styles.footerInner}`}>
-          <span>
-            Cloudsentry, built by{" "}
+          <span className={styles.footerBrand}>
+            <LogoMark size={26} /> Cloudsentry, built by{" "}
             <a href={AUTHOR_URL} target="_blank" rel="noreferrer">
               Sakar Joshi
             </a>

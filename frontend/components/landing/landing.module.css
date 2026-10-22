@@ -75,13 +75,6 @@
   text-decoration: none;
 }
 
-.mark {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #6f8bff, #a78bfa);
-}
-
 .navLinks {
   display: flex;
   gap: var(--space-5);
@@ -748,4 +741,10 @@
   .page {
     scroll-behavior: auto;
   }
+}
+
+.footerBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
 }

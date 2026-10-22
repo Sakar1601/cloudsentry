@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import Logo from "@/components/Logo";
 import { STATIC_DEMO } from "@/lib/api";
 
 import styles from "./Header.module.css";
@@ -26,8 +27,7 @@ export default function Header({ active }: HeaderProps) {
   return (
     <header className={styles.header}>
       <Link href="/" className={styles.brand}>
-        <span className={styles.mark} aria-hidden="true" />
-        <span className={styles.title}>Cloudsentry</span>
+        <Logo size={34} />
       </Link>
       {STATIC_DEMO && (
         <span className={styles.demoBadge} title="Runs entirely in your browser against a simulated AWS account">

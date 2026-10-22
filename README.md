@@ -1,4 +1,4 @@
-# Cloudsentry
+<h1 align="center"><img src="docs/images/banner.png" alt="Cloudsentry: your AWS account, watched by three AI agents"></h1>
 
 **Your AWS account as a live graph, watched by three AI agents.**
 
@@ -68,7 +68,7 @@ Agent swarm (Cost │ Performance │ Security) ── Claude tool use ───
 Action store (SQLite) ──► approve ──► executor ──► boto3 write (gated) ────┘
 ```
 
-Full design: [docs/spec.md](docs/spec.md).
+Full design: [docs/spec.md](docs/spec.md). Brand and logo usage: [docs/brand.md](docs/brand.md).
 
 ## Run it
 
