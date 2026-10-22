@@ -7,6 +7,8 @@ Three Claude-powered agents — **Cost**, **Performance**, **Security** — cont
 call real AWS APIs, annotate what they find, and propose a fix. Nothing mutates your account
 until a human clicks **Approve**; every decision lands in an audit log.
 
+**[▶ Live demo](https://sakar1601.github.io/cloudsentry/)** — runs in your browser, nothing to install.
+
 ![Live graph with an agent finding](docs/images/graph.png)
 
 | Audit log of every proposed action |
