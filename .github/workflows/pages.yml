@@ -23,7 +23,7 @@ jobs:
         working-directory: frontend
         env:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with: { path: frontend/out }
 
   deploy:
