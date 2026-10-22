@@ -3,7 +3,7 @@ name = "cloudsentry-backend"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.146.0",
+    "fastapi>=0.147.0",
     "uvicorn[standard]>=0.54.0",
     "boto3>=1.43.114",
     "pydantic>=2.14.1",
