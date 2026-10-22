@@ -6,7 +6,7 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
     "boto3>=1.34",
-    "pydantic>=2.6",
+    "pydantic>=2.14.1",
     "anthropic>=0.34",
     # Transitive dependencies pinned to patched releases (known advisories in earlier versions).
     "urllib3>=2.8.0",
