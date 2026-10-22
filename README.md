@@ -1,47 +1,85 @@
 # Cloudsentry
 
-An AI-native operations copilot for AWS. Cloudsentry watches your cloud
-resources, understands what's actually happening (not just raw metrics), and
-answers operational questions in plain language — then, with permission, acts.
+**Your AWS account as a live graph, watched by three AI agents.**
 
-## Origin
+Cloudsentry renders real AWS resources (EC2, Lambda, DynamoDB) as a live force-directed graph.
+Three Claude-powered agents — **Cost**, **Performance**, **Security** — continuously pick a node,
+call real AWS APIs, annotate what they find, and propose a fix. Nothing mutates your account
+until a human clicks **Approve**; every decision lands in an audit log.
 
-Cloudsentry supersedes an earlier project, "AWS Cloud Engineer's Toolbox"
-(a Next.js demo site showcasing IAM policies, Lambda, IaC snippets, and a
-live echo function behind API Gateway). That project was built to *show*
-cloud skills through static/interactive demos. Cloudsentry keeps the same
-real AWS plumbing (Lambda, API Gateway, CloudWatch, IAM) but turns it from a
-demo into a working product: an agent that reasons over live account state
-instead of illustrating concepts.
+![Live graph with an agent finding](docs/images/graph.png)
 
-## What it does
+| Audit log of every proposed action |
+|---|
+| ![Audit log](docs/images/audit.png) |
 
-- **Ask questions about your AWS account in plain language** — "why did
-  latency spike last night", "what's driving my EC2 cost this month", "any
-  IAM roles with excess permissions".
-- **Investigates, not just reports** — chains real AWS API calls (CloudWatch
-  Logs Insights queries, Cost Explorer, IAM policy analysis, EC2/Lambda
-  metrics) and reasons over the combined result.
-- **Summarizes incidents** — turns a burst of CloudWatch log noise into a
-  short human-readable incident summary with a likely root cause.
-- **Recommends and, on approval, acts** — e.g. right-sizing an instance,
-  tightening an over-permissive IAM policy — always behind an explicit
-  confirmation step, never silent changes.
+## Try it in 30 seconds (no AWS account, no API key)
 
-## Architecture (initial direction)
+```bash
+docker compose up --build        # then open http://localhost:3000
+```
 
-- **Agent core**: Claude (via the Anthropic API) as the reasoning loop, with
-  a fixed toolbox of read-mostly AWS actions exposed as tool-use functions
-  (CloudWatch Logs/Metrics, Cost Explorer, IAM, EC2, Lambda).
-- **Tool layer**: thin wrappers around boto3 calls — this is where the
-  original toolbox's individual demos (IAM policy analysis, Lambda
-  invocation, log inspection) get reused as real tools instead of illustrative
-  snippets.
-- **Interface**: a chat-style frontend (reusing the existing Next.js
-  toolbox UI where it makes sense) plus a CLI for scripted/CI use.
-- **Guardrails**: IAM least-privilege for the agent's own execution role;
-  read-only by default, mutating actions require explicit human confirmation.
+This starts **demo mode**: a fictional AWS account and scripted agents run through the *same*
+poller, WebSocket stream, action store and approval API as production — only the AWS and LLM
+calls are swapped out (`backend/app/demo/`). Approving an action is simulated.
 
-## Status
+Without Docker: `make install`, then `make backend` and `make frontend` in two terminals.
 
-Early scaffolding. Architecture and task breakdown to follow.
+## How it works
+
+```
+ Next.js UI  ◄── WebSocket (graph deltas, agent moves, findings) ──┐
+ (force graph)  ── REST: approve / reject / audit ──►  FastAPI ────┤
+                                                                   │
+   Graph poller ── boto3 (EC2, Lambda, DynamoDB, CloudWatch,       │
+   (diffs → events)  Cost Explorer, IAM) ──► in-memory graph ──────┤
+                                                                   │
+   Agent swarm: Cost │ Performance │ Security                      │
+   each = Claude tool-use loop over a scoped read-only tool set ───┘
+        └─ action tools only *propose* → SQLite pending_actions → human approve → boto3 write
+```
+
+- **Graph builder** — polls AWS, derives edges (shared VPC, Lambda env-var references, IAM access),
+  diffs snapshots, and streams only deltas to clients.
+- **Agent swarm** — each agent selects a node (cost/latency spike vs. rolling baseline, or round-robin for
+  security), then runs a bounded Claude tool-use loop and emits a finding.
+- **Approval gate** — action tools (`stop_ec2_instance`, `resize_ec2_instance`, `tighten_iam_policy`)
+  never touch AWS; they write a pending action. Only the approve endpoint executes it.
+- **Infra** — Terraform for a least-privilege task role and an ECS Fargate service (`infra/`).
+
+Full design: [docs/spec.md](docs/spec.md).
+
+## Run against a real AWS account
+
+```bash
+cp backend/.env.example backend/.env      # add ANTHROPIC_API_KEY and AWS profile/region
+cd backend && python3 -m venv .venv && source .venv/bin/activate && pip install -e '.[dev]'
+set -a && source .env && set +a
+uvicorn app.main:app --port 8000
+cd ../frontend && cp .env.local.example .env.local && npm ci && npm run dev
+```
+
+Needs read access to EC2/Lambda/DynamoDB/CloudWatch/Cost Explorer/IAM (the policy in
+`infra/terraform/iam/` is the reference). To keep the account lively, run
+`backend/scripts/traffic_generator.py <function-names>` as a separate process.
+Approving an action in live mode **really executes it** — use a sandbox account.
+
+## Repo layout
+
+```
+backend/   FastAPI app: graph/ (poller, diff, edges), agents/, actions/ (store, executor),
+           tools/ (boto3 wrappers), demo/ (fixture account + scripted agents), tests/ (118)
+frontend/  Next.js 16 + TypeScript: graph canvas, agent overlays, action cards, audit page (19 tests)
+infra/     Terraform: iam/ (task role), ecs/ (Fargate service)
+docs/      design spec, screenshots
+```
+
+## Tests & CI
+
+`make test` runs pytest and vitest. GitHub Actions (`.github/workflows/ci.yml`) also type-checks and
+builds the frontend and validates the Terraform modules.
+
+## Status & known gaps
+
+Working end to end locally (live and demo). The ECS service has no load balancer yet, so a public
+cloud deployment of the backend is not wired up — see [infra/README.md](infra/README.md).

@@ -1,9 +1,10 @@
 import asyncio
 import json
+import os
 
 from anthropic import Anthropic
 
-MODEL = "claude-sonnet-5"
+MODEL = os.environ.get("CLOUDSENTRY_MODEL", "claude-sonnet-5")
 MAX_TOKENS = 1024
 MAX_TOOL_ITERATIONS = 5
 FALLBACK_FINDING = "Investigation inconclusive after multiple tool calls."

@@ -1,0 +1,25 @@
+# One command, no credentials:  docker compose up --build   ->  http://localhost:3000
+# Runs in demo mode (fictional AWS account, scripted agents). For a live AWS
+# account instead, see the README ("Run against a real AWS account").
+services:
+  backend:
+    build: ./backend
+    environment:
+      CLOUDSENTRY_DEMO: "1"
+      CLOUDSENTRY_ACTIONS_DB: ":memory:"
+      FRONTEND_ORIGIN: http://localhost:${FRONTEND_PORT:-3000}
+    ports: ["${BACKEND_PORT:-8000}:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:${BACKEND_PORT:-8000}
+    ports: ["${FRONTEND_PORT:-3000}:3000"]
+    depends_on:
+      backend:
+        condition: service_healthy

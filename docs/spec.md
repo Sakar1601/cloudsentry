@@ -323,10 +323,3 @@ Each phase produces working, independently testable software:
 - **Phase 6 — Deployment + least-privilege IAM.** Terraform for
   Cloudsentry's own execution role, containerized API deployment,
   frontend deployment, Traffic Generator run as a separate process.
-
-Each phase gets its own implementation plan under
-`docs/superpowers/plans/`. The existing `docs/superpowers/plans/
-phase-1-agent-core.md` describes the earlier chat-based design and is
-superseded by this spec; a new Phase 1 plan for the static graph should
-replace it before implementation resumes.
-</content>

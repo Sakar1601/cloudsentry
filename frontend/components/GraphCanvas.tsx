@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { GraphEdge, GraphNode } from "@/lib/types";
 
@@ -69,19 +69,55 @@ export default function GraphCanvas({ nodes, edges, onNodePositions }: GraphCanv
     return () => observer.disconnect();
   }, []);
 
-  const graphData = {
-    nodes: Object.values(nodes).map((node) => ({
-      id: node.node_id,
-      resourceType: node.resource_type,
-      name: node.name,
-      color: nodeColor(node),
-      val: nodeSize(node),
-    })),
-    links: edges.map((edge) => ({
-      source: edge.source,
-      target: edge.target,
-      relation: edge.relation,
-    })),
+  // The force simulation stores x/y/vx/vy on the node objects it is given, and
+  // this component re-renders on every animation frame (via onNodePositions).
+  // Rebuilding fresh objects each render would reset every node to the origin,
+  // so node objects are reused by id and graphData is memoized on its inputs.
+  const nodeObjects = useRef<Record<string, any>>({});
+  const graphData = useMemo(() => {
+    const live = new Set<string>();
+    const graphNodes = Object.values(nodes).map((node) => {
+      live.add(node.node_id);
+      const obj = nodeObjects.current[node.node_id] ?? { id: node.node_id };
+      Object.assign(obj, {
+        resourceType: node.resource_type,
+        name: node.name,
+        color: nodeColor(node),
+        val: nodeSize(node),
+      });
+      nodeObjects.current[node.node_id] = obj;
+      return obj;
+    });
+    for (const id of Object.keys(nodeObjects.current)) {
+      if (!live.has(id)) delete nodeObjects.current[id];
+    }
+    return {
+      nodes: graphNodes,
+      links: edges.map((edge) => ({
+        source: edge.source,
+        target: edge.target,
+        relation: edge.relation,
+      })),
+    };
+  }, [nodes, edges]);
+
+  // Spread nodes out. The graph component loads asynchronously, so its ref is
+  // not reliably set in an effect; configure forces on the first engine tick.
+  const forcesConfigured = useRef(false);
+  const configureForces = () => {
+    const fg = fgRef.current;
+    if (forcesConfigured.current || typeof fg?.d3Force !== "function") return;
+    fg.d3Force("charge")?.strength(-120);
+    fg.d3Force("link")?.distance(55);
+    // Weak pull toward the origin so unconnected clusters stay in frame.
+    const gravity = (alpha: number) => {
+      for (const node of graphData.nodes as any[]) {
+        node.vx -= (node.x ?? 0) * 0.08 * alpha;
+        node.vy -= (node.y ?? 0) * 0.08 * alpha;
+      }
+    };
+    fg.d3Force("gravity", gravity);
+    forcesConfigured.current = true;
   };
 
   return (
@@ -97,6 +133,18 @@ export default function GraphCanvas({ nodes, edges, onNodePositions }: GraphCanv
           nodeVal={(node: any) => node.val}
           nodeLabel={(node: any) => node.name}
           nodeRelSize={4}
+          maxZoom={2}
+          nodeCanvasObjectMode={() => "after"}
+          nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, scale: number) => {
+            ctx.font = `${11 / scale}px Inter, sans-serif`;
+            ctx.textAlign = "center";
+            ctx.fillStyle = "rgba(201, 207, 219, 0.85)";
+            ctx.fillText(node.name, node.x, node.y + 4 * Math.sqrt(node.val) + 12 / scale);
+          }}
+          autoPauseRedraw={false}
+          cooldownTicks={120}
+          onEngineTick={configureForces}
+          onEngineStop={() => fgRef.current?.zoomToFit(400, 140)}
           linkColor={() => LINK_COLOR}
           linkWidth={1.5}
           linkLabel={(link: any) => link.relation}

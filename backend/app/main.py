@@ -15,13 +15,37 @@ from app.agents.tools import (
     SECURITY_TOOL_NAMES,
     tool_subset,
 )
+from app.agents.investigate import investigate_node
 from app.graph.broadcast import ConnectionManager
+from app.graph.builder import build_graph
 from app.graph.poller import GraphPoller
 from app.graph.store import GraphStore
 
+# Demo mode runs the full backend against a fictional AWS account with scripted
+# agents: no AWS credentials, no Anthropic key, no cost. See app/demo/.
+DEMO_MODE = os.environ.get("CLOUDSENTRY_DEMO", "").lower() in ("1", "true", "yes")
+POLL_INTERVAL = float(os.environ.get("CLOUDSENTRY_POLL_INTERVAL", "5" if DEMO_MODE else "30"))
+AGENT_INTERVAL = float(os.environ.get("CLOUDSENTRY_AGENT_INTERVAL", "10" if DEMO_MODE else "60"))
+
+if DEMO_MODE:
+    from app.demo.executor import simulate_action
+    from app.demo.fixtures import DemoGraphBuilder
+    from app.demo.investigate import make_demo_investigator
+
+    _build_graph_fn = DemoGraphBuilder()
+    _investigate_fn = make_demo_investigator()
+else:
+    _build_graph_fn = build_graph
+    _investigate_fn = investigate_node
+
 graph_store = GraphStore()
 connection_manager = ConnectionManager()
-graph_poller = GraphPoller(store=graph_store, broadcaster=connection_manager)
+graph_poller = GraphPoller(
+    store=graph_store,
+    broadcaster=connection_manager,
+    interval_seconds=POLL_INTERVAL,
+    build_graph_fn=_build_graph_fn,
+)
 # Overridable so the test suite never writes into the same file a real
 # running server reads from (see backend/tests/conftest.py, which points
 # this at ":memory:" for every pytest run) — without this, `pytest` and
@@ -47,6 +71,8 @@ cost_agent = AgentRunner(
     investigation_focus="cost trends",
     action_tool_name="stop_ec2_instance",
     action_store=action_store,
+    interval_seconds=AGENT_INTERVAL,
+    investigate_fn=_investigate_fn,
 )
 performance_agent = AgentRunner(
     agent_id="performance",
@@ -58,6 +84,8 @@ performance_agent = AgentRunner(
     investigation_focus="performance and latency issues",
     action_tool_name="resize_ec2_instance",
     action_store=action_store,
+    interval_seconds=AGENT_INTERVAL,
+    investigate_fn=_investigate_fn,
 )
 security_agent = AgentRunner(
     agent_id="security",
@@ -69,6 +97,8 @@ security_agent = AgentRunner(
     investigation_focus="IAM security risks such as overly broad permissions",
     action_tool_name="tighten_iam_policy",
     action_store=action_store,
+    interval_seconds=AGENT_INTERVAL,
+    investigate_fn=_investigate_fn,
 )
 
 
@@ -136,7 +166,7 @@ async def approve_action(action_id: str):
     if action["status"] != "pending":
         raise HTTPException(status_code=409, detail=f"Action already {action['status']}")
 
-    outcome = execute_action(action)
+    outcome = simulate_action(action) if DEMO_MODE else execute_action(action)
     resolved = action_store.resolve(action_id, status="approved", result=outcome)
 
     await connection_manager.broadcast(

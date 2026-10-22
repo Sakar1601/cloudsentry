@@ -1,6 +1,6 @@
 # Cloudsentry Frontend
 
-Next.js (App Router) + TypeScript UI for Cloudsentry's live infrastructure graph. See `docs/spec.md` and `docs/superpowers/plans/phase-5-web-ui.md` for design details.
+Next.js (App Router) + TypeScript UI for Cloudsentry's live infrastructure graph. See `docs/spec.md` for design details.
 
 ## Local development
 

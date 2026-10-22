@@ -21,3 +21,8 @@ next-env.d.ts
 *.tfstate
 *.tfstate.backup
 *.tfplan
+
+# local tooling / generated
+graphify-out/
+.claude/
+.pytest_cache/
