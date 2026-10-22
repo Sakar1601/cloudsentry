@@ -37,7 +37,7 @@ def get_metric_snapshot(
     now: datetime.datetime | None = None,
 ) -> dict | None:
     config = METRIC_CONFIG[resource_type]
-    now = now or datetime.datetime.utcnow()
+    now = now or datetime.datetime.now(datetime.UTC)
 
     datapoints = get_cloudwatch_metric(
         namespace=config["namespace"],

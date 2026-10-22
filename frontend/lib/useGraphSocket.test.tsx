@@ -203,4 +203,14 @@ describe("useGraphSocket", () => {
     act(() => socket.emit("close", {}));
     expect(result.current.connection).toBe("closed");
   });
+
+  it("reports authRequired when the API answers 401", async () => {
+    global.fetch = vi.fn(async () => ({ status: 401, json: async () => ({}) }) as Response) as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useGraphSocket());
+
+    await waitFor(() => expect(result.current.authRequired).toBe(true));
+    expect(result.current.loading).toBe(false);
+    expect(FakeWebSocket.instances).toHaveLength(0);
+  });
 });

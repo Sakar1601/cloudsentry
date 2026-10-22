@@ -13,7 +13,6 @@ PERFORMANCE_TOOL_NAMES = [
     "list_ec2_instances",
 ]
 SECURITY_TOOL_NAMES = ["get_iam_policy_for_role", "list_ec2_instances", "list_lambda_functions"]
-ACTION_TOOL_NAMES = ["stop_ec2_instance", "resize_ec2_instance", "tighten_iam_policy"]
 
 
 def _get_cloudwatch_metric_from_tool_call(

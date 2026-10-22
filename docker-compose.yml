@@ -8,7 +8,7 @@ services:
       CLOUDSENTRY_DEMO: "1"
       CLOUDSENTRY_ACTIONS_DB: ":memory:"
       FRONTEND_ORIGIN: http://localhost:${FRONTEND_PORT:-3000}
-    ports: ["${BACKEND_PORT:-8000}:8000"]
+    ports: ["127.0.0.1:${BACKEND_PORT:-8000}:8000"]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health')"]
       interval: 5s
@@ -19,7 +19,7 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:${BACKEND_PORT:-8000}
-    ports: ["${FRONTEND_PORT:-3000}:3000"]
+    ports: ["127.0.0.1:${FRONTEND_PORT:-3000}:3000"]
     depends_on:
       backend:
         condition: service_healthy

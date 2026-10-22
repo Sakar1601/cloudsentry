@@ -7,12 +7,16 @@ const GUARANTEES = [
     body: "stop_ec2_instance, resize_ec2_instance and tighten_iam_policy do not call AWS. Invoking one writes a pending row with the exact parameters.",
   },
   {
-    title: "Execution lives in one place",
-    body: "Only the approve endpoint runs the change, through a separate executor. Approving twice returns a conflict; rejecting runs nothing.",
+    title: "Execution lives in one place, behind two checks",
+    body: "Only the approve endpoint runs the change, through a separate executor. Parameters are validated when the action is proposed and again just before it runs: instance ids and types must match strict patterns, and an IAM policy that widens access or can escalate privileges is refused. Approving twice returns a conflict; rejecting runs nothing.",
   },
   {
     title: "The blast radius is capped in IAM",
-    body: "In the Terraform task role, writes apply only to EC2 instances tagged CloudsentryManaged=true, and IAM edits exclude roles ending in -admin or containing -critical-. This is demo-grade least privilege, and the Terraform says so.",
+    body: "In the Terraform task role, writes apply only to EC2 instances and IAM roles you have tagged CloudsentryManaged=true, and an explicit deny stops the service editing its own role. This is demo-grade least privilege, and the Terraform says so.",
+  },
+  {
+    title: "The API refuses forged requests",
+    body: "State-changing requests and WebSockets from any origin other than the frontend are rejected, so another website cannot make your browser approve an action. Set a bearer token and every endpoint except /health requires it.",
   },
   {
     title: "Everything is on the record",

@@ -34,7 +34,7 @@ const ROWS: { layer: string; what: string; tech: string }[] = [
   },
   {
     layer: "Quality",
-    what: "121 backend tests and 28 frontend tests, type-checking, a production build and Terraform validation on every push.",
+    what: "169 backend tests and 44 frontend tests, type-checking, a production build, Terraform validation and dependency vulnerability audits on every push.",
     tech: "pytest, vitest, GitHub Actions",
   },
   {

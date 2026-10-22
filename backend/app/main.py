@@ -2,7 +2,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.actions.executor import execute_action
@@ -20,6 +20,7 @@ from app.graph.broadcast import ConnectionManager
 from app.graph.builder import build_graph
 from app.graph.poller import GraphPoller
 from app.graph.store import GraphStore
+from app.security import allowed_origin, require_request_allowed, websocket_allowed
 
 # Demo mode runs the full backend against a fictional AWS account with scripted
 # agents: no AWS credentials, no Anthropic key, no cost. See app/demo/.
@@ -123,13 +124,11 @@ app = FastAPI(title="Cloudsentry Graph API", lifespan=lifespan)
 # needs explicit CORS headers or every fetch/WebSocket call from the UI is
 # blocked. FRONTEND_ORIGIN lets a real deployment point this at its actual
 # frontend URL; local dev works out of the box against the default.
-FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[allowed_origin()],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -138,14 +137,18 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/graph")
+@app.get("/graph", dependencies=[Depends(require_request_allowed)])
 def get_graph():
     return graph_store.get()
 
 
 @app.websocket("/graph/stream")
 async def graph_stream(websocket: WebSocket):
-    await connection_manager.connect(websocket)
+    if not websocket_allowed(websocket):
+        await websocket.close(code=1008)
+        return
+    if not await connection_manager.connect(websocket):
+        return
     try:
         while True:
             await websocket.receive_text()
@@ -153,12 +156,12 @@ async def graph_stream(websocket: WebSocket):
         connection_manager.disconnect(websocket)
 
 
-@app.get("/actions")
+@app.get("/actions", dependencies=[Depends(require_request_allowed)])
 def list_actions():
     return action_store.list()
 
 
-@app.post("/actions/{action_id}/approve")
+@app.post("/actions/{action_id}/approve", dependencies=[Depends(require_request_allowed)])
 async def approve_action(action_id: str):
     action = action_store.get(action_id)
     if action is None:
@@ -175,7 +178,7 @@ async def approve_action(action_id: str):
     return resolved
 
 
-@app.post("/actions/{action_id}/reject")
+@app.post("/actions/{action_id}/reject", dependencies=[Depends(require_request_allowed)])
 async def reject_action(action_id: str):
     action = action_store.get(action_id)
     if action is None:

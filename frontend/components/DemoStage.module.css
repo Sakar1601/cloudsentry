@@ -131,21 +131,6 @@
   color: var(--text-primary);
 }
 
-.spinner {
-  width: 20px;
-  height: 20px;
-  border-radius: var(--radius-full);
-  border: 2px solid var(--border-strong);
-  border-top-color: var(--accent);
-  animation: spin 800ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .legend {
   position: absolute;
   left: var(--space-4);

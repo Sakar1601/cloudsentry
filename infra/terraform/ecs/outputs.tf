@@ -14,3 +14,8 @@ output "anthropic_api_key_secret_arn" {
   description = "ARN of the Secrets Manager secret — populate its value manually before the service can start successfully."
   value       = aws_secretsmanager_secret.anthropic_api_key.arn
 }
+
+output "api_token_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding CLOUDSENTRY_API_TOKEN. Populate its value manually (see infra/README.md)."
+  value       = aws_secretsmanager_secret.api_token.arn
+}

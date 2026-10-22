@@ -9,7 +9,7 @@ export interface ResolvedEntry {
   at: number;
 }
 
-export const RESOLVED_VISIBLE_MS = 12000;
+const RESOLVED_VISIBLE_MS = 12000;
 
 /**
  * Actions that moved from pending to resolved while the page was open, kept

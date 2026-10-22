@@ -34,7 +34,6 @@ data "aws_iam_policy_document" "read_only" {
       "ce:GetCostAndUsage",
       "ec2:DescribeInstances",
       "lambda:ListFunctions",
-      "lambda:InvokeFunction",
       "dynamodb:ListTables",
       "dynamodb:DescribeTable",
       "iam:ListAttachedRolePolicies",
@@ -54,15 +53,19 @@ resource "aws_iam_role_policy" "read_only" {
 }
 
 # Narrowly-scoped write permissions for the three action tools (Phase 4).
-# Real-world "restricted to non-critical roles" cannot be perfectly
-# expressed in IAM policy language alone. IAM has no condition key for
-# "the target role's own name", so the only technically correct way to
-# express an exclusion is directly on the Resource/NotResource ARN
-# pattern — this excludes role names containing "-admin" or
-# "-critical-". This is what least-privilege looks like for a
-# demo/learning project, not a production-grade guarantee; a production
-# deployment would need a permissions boundary or an allowlist
-# maintained outside Terraform.
+#
+# Both write paths are ALLOWLISTS keyed on a tag you set yourself: the service
+# can only touch resources tagged CloudsentryManaged=true. Tag only what you
+# are happy for an approved action to modify.
+#
+# iam:PutRolePolicy is the dangerous one: rewriting a role's inline policy can
+# grant anything that role could be made to do. Two guards apply:
+#   1. It is allowed only on roles tagged CloudsentryManaged=true (an allowlist,
+#      so a role you forgot about is safe by default).
+#   2. An explicit Deny, which always wins over any Allow, stops the service
+#      from ever editing its own role, so it cannot widen its own permissions.
+# The application also validates every proposed policy before it is proposed
+# and again before it is executed (backend/app/actions/validation.py).
 data "aws_iam_policy_document" "scoped_write" {
   statement {
     sid       = "CloudsentryStopResizeTaggedInstances"
@@ -78,13 +81,31 @@ data "aws_iam_policy_document" "scoped_write" {
   }
 
   statement {
-    sid     = "CloudsentryTightenNonCriticalRolePolicies"
-    effect  = "Allow"
-    actions = ["iam:PutRolePolicy"]
-    not_resources = [
-      "arn:aws:iam::*:role/*-admin",
-      "arn:aws:iam::*:role/*-critical-*",
+    sid       = "CloudsentryTightenTaggedRolePolicies"
+    effect    = "Allow"
+    actions   = ["iam:PutRolePolicy"]
+    resources = ["arn:aws:iam::*:role/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:ResourceTag/CloudsentryManaged"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    sid    = "CloudsentryNeverEditItself"
+    effect = "Deny"
+    actions = [
+      "iam:PutRolePolicy",
+      "iam:DeleteRolePolicy",
+      "iam:AttachRolePolicy",
+      "iam:DetachRolePolicy",
+      "iam:UpdateAssumeRolePolicy",
+      "iam:PutRolePermissionsBoundary",
+      "iam:DeleteRolePermissionsBoundary",
     ]
+    resources = [aws_iam_role.cloudsentry_execution_role.arn]
   }
 }
 

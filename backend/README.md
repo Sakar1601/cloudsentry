@@ -18,6 +18,9 @@ set -a && source .env && set +a && uvicorn app.main:app --port 8000
 
 ## API
 
+Set `CLOUDSENTRY_API_TOKEN` to require `Authorization: Bearer <token>` on everything except `/health` (WebSocket: `?token=`).
+State-changing requests and WebSockets from any `Origin` other than `FRONTEND_ORIGIN` are refused.
+
 | Endpoint | Purpose |
 |---|---|
 | `GET /health` | liveness |
@@ -31,7 +34,8 @@ set -a && source .env && set +a && uvicorn app.main:app --port 8000
 
 - `app/graph/` — builder, poller, diffing, edge derivation, cost aggregation (Cost Explorer cached, see `CLOUDSENTRY_COST_TTL`)
 - `app/agents/` — runner loop, node selection, scoped tool sets, Claude tool-use loop
-- `app/actions/` — SQLite store, proposal tools (inert), executor (the only code that writes to AWS)
+- `app/actions/` — SQLite store, proposal tools (inert), strict parameter validation, executor (the only code that writes to AWS)
+- `app/security.py` — origin (CSRF) checks and the optional bearer token
 - `app/tools/` — thin boto3 wrappers
 - `app/demo/` — fixture account, scripted investigator, simulated executor
 - `scripts/traffic_generator.py` — standalone process that invokes Lambdas so the account has real activity
@@ -39,7 +43,7 @@ set -a && source .env && set +a && uvicorn app.main:app --port 8000
 ## Test
 
 ```bash
-pytest -q        # 121 tests, no AWS or network access required
+pytest -q        # 169 tests, no AWS or network access required
 ```
 
 Configuration variables are listed in the root [README](../README.md#configuration).

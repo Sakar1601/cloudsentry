@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { connectStream, getActions, getGraph } from "./api";
+import { AuthRequiredError } from "./auth";
 
 import type {
   AgentMoveState,
@@ -41,6 +42,7 @@ export function useGraphSocket(): GraphSocketState {
   const [lastEvent, setLastEvent] = useState<LastEvent | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [connection, setConnection] = useState<ConnectionStatus>("connecting");
+  const [authRequired, setAuthRequired] = useState(false);
   const seq = useRef(0);
   const disconnectRef = useRef<(() => void) | null>(null);
 
@@ -124,7 +126,16 @@ export function useGraphSocket(): GraphSocketState {
     }
 
     async function init() {
-      const graph = await getGraph();
+      let graph;
+      try {
+        graph = await getGraph();
+      } catch (error) {
+        if (!cancelled && error instanceof AuthRequiredError) {
+          setAuthRequired(true);
+          setLoading(false);
+        }
+        return;
+      }
       if (cancelled) return;
 
       setNodes(graph.nodes);
@@ -147,5 +158,5 @@ export function useGraphSocket(): GraphSocketState {
     };
   }, []);
 
-  return { nodes, edges, agents, findings, actions, loading, lastEvent, activity, connection };
+  return { nodes, edges, agents, findings, actions, loading, lastEvent, activity, connection, authRequired };
 }

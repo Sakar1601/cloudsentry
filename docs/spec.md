@@ -330,8 +330,8 @@ All six phases are built and the system has been run end to end against a real A
 
 | Area | Status |
 |---|---|
-| Tool layer, graph builder, live deltas, agent swarm, approval gate, audit log | Built and tested (121 backend tests) |
-| Web UI | Built: live graph, agent markers, findings, approval queue, persistent activity feed, audit log with details (28 tests) |
+| Tool layer, graph builder, live deltas, agent swarm, approval gate, audit log | Built and tested (169 backend tests) |
+| Web UI | Built: live graph, agent markers, findings, approval queue, persistent activity feed, audit log with details (44 tests) |
 | Terraform (task role, ECS Fargate) | Written and validated; the ECS service has no load balancer yet, so it is not publicly reachable |
 | Traffic generator | Built as a standalone process |
 
@@ -342,4 +342,9 @@ Additions beyond the original spec, made to make the project runnable and demons
 - **Static demo site**: the UI with an in-browser simulator (`frontend/lib/demo/engine.ts`), exported statically and
   deployed to GitHub Pages, with an explainer landing page.
 - **Cost Explorer cache** (`CLOUDSENTRY_COST_TTL`): Cost Explorer bills per request, so it is not called on every poll.
+- **Security hardening** (found in a final review): strict validation of every proposed action, applied when it is
+  proposed and again before it executes; cross-site request protection on state-changing requests and the WebSocket;
+  an optional bearer token; a connection cap; an untrusted-data system prompt for the agents; a non-root container;
+  IAM write access reduced to an allowlist keyed on a tag, an explicit deny on the service's own role, and
+  `lambda:InvokeFunction` removed from the task role (nothing in the service invokes Lambdas); dependency audits in CI.
 

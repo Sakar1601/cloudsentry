@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import AuditTable from "@/components/AuditTable";
 import Header from "@/components/Header";
+import TokenGate from "@/components/TokenGate";
 import { getActions } from "@/lib/api";
+import { AuthRequiredError } from "@/lib/auth";
 import type { PendingAction } from "@/lib/types";
 
 import styles from "./page.module.css";
@@ -15,13 +17,21 @@ const FILTERS: Filter[] = ["all", "pending", "approved", "rejected"];
 export default function AuditPage() {
   const [actions, setActions] = useState<PendingAction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authRequired, setAuthRequired] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
     let cancelled = false;
-    getActions().then((data: PendingAction[]) => {
+    getActions()
+      .then((data: PendingAction[]) => {
         if (!cancelled) {
           setActions(data);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled && error instanceof AuthRequiredError) {
+          setAuthRequired(true);
           setLoading(false);
         }
       });
@@ -43,7 +53,9 @@ export default function AuditPage() {
       <div className={styles.content}>
         <h1 className={styles.title}>Audit Log</h1>
         <p className={styles.subtitle}>Every action an agent has proposed, and how it was resolved.</p>
-        {loading ? (
+        {authRequired ? (
+          <TokenGate />
+        ) : loading ? (
           <p className={styles.loading}>Loading…</p>
         ) : (
           <>

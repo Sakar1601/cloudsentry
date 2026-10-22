@@ -17,7 +17,7 @@ accent blue `#4da3ff`. The product is the picture: one thing watching, three age
 | `frontend/public/og.png` | Social preview image (Open Graph / Twitter card). |
 | `frontend/components/Logo.tsx` | `LogoMark` and `Logo` (mark + wordmark) used in the app header, landing nav and footer. |
 
-If the geometry changes, update `Logo.tsx`, `app/icon.svg`, `public/logo-*.svg` and `docs/images/logo-*.svg` together.
+If the geometry changes, update `Logo.tsx`, `app/icon.svg` and `docs/images/logo-*.svg` together.
 
 The GitHub repository's social preview (Settings → General → Social preview) cannot be set from code; upload
 `frontend/public/og.png` there so links to the repo show the same card.

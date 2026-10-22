@@ -67,7 +67,7 @@ const DIFFERENCES: {
   },
   {
     title: "The model cannot pull the trigger",
-    body: "Action tools only record intent. One endpoint executes, behind a human click, and the IAM role can only write to instances you have tagged. The safety does not depend on the model behaving.",
+    body: "Action tools only record intent. One endpoint executes, behind a human click, and the IAM role can only write to resources you have tagged. The safety does not depend on the model behaving.",
     proof: "See Safety below, and infra/terraform/iam.",
     visual: <GateVisual />,
     size: "tall",

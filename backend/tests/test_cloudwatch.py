@@ -74,7 +74,7 @@ def test_get_cloudwatch_logs_raises_on_failed_query():
                 end_time=2,
                 client=mock_client,
             )
-            assert False, "expected RuntimeError"
+            raise AssertionError("expected RuntimeError")
         except RuntimeError as e:
             assert "q-3" in str(e)
 

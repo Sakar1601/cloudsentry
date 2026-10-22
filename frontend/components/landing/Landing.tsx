@@ -76,7 +76,7 @@ export default function Landing() {
             </div>
             <ul className={styles.proof}>
               <li>Run end to end against a real AWS account</li>
-              <li>149 automated tests</li>
+              <li>213 automated tests</li>
               <li>Deployable with Terraform</li>
             </ul>
           </div>

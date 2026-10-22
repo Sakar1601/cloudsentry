@@ -68,4 +68,6 @@ export interface GraphSocketState {
   /** Newest-first log of findings, proposals and resolutions (capped). */
   activity?: ActivityItem[];
   connection?: ConnectionStatus;
+  /** The API answered 401: the operator must enter a token. */
+  authRequired?: boolean;
 }

@@ -48,7 +48,7 @@ class DemoGraphBuilder:
     def __call__(self, clients: dict | None = None) -> dict:
         self._builds += 1
         spike = self._builds % SPIKE_EVERY == 0
-        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        now = datetime.datetime.now(datetime.UTC).isoformat()
 
         nodes = {}
         for node_id, rtype, name, state, tags, base_cost, base_metric in NODES:

@@ -27,7 +27,7 @@ class ActionStore:
 
     def create(self, agent_id: str, node_id: str, tool_name: str, params: dict) -> dict:
         action_id = str(uuid.uuid4())
-        created_at = datetime.datetime.utcnow().isoformat()
+        created_at = datetime.datetime.now(datetime.UTC).isoformat()
         self._conn.execute(
             "INSERT INTO pending_actions "
             "(id, agent_id, node_id, tool_name, params, proposed_reasoning, status, created_at, resolved_at, result) "
@@ -61,7 +61,7 @@ class ActionStore:
         self._conn.commit()
 
     def resolve(self, action_id: str, status: str, result: dict | None) -> dict:
-        resolved_at = datetime.datetime.utcnow().isoformat()
+        resolved_at = datetime.datetime.now(datetime.UTC).isoformat()
         self._conn.execute(
             "UPDATE pending_actions SET status = ?, resolved_at = ?, result = ? WHERE id = ?",
             (status, resolved_at, json.dumps(result) if result is not None else None, action_id),

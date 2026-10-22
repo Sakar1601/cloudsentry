@@ -3,8 +3,8 @@ import styles from "./Logo.module.css";
 /*
   The Cloudsentry mark: a central "eye" node (the sentry) wired to three
   agent nodes, coloured as the Cost (amber), Performance (violet) and Security
-  (red) agents are everywhere else in the UI. Geometry mirrors
-  public/logo-mark.svg and app/icon.svg, keep them in sync.
+  (red) agents are everywhere else in the UI. Geometry mirrors app/icon.svg
+  and docs/images/logo-*.svg, keep them in sync (see docs/brand.md).
 */
 
 export interface LogoMarkProps {

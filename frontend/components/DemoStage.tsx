@@ -7,9 +7,10 @@ import AgentIcon from "@/components/AgentIcon";
 import AppSidebar from "@/components/AppSidebar";
 import FindingBubble from "@/components/FindingBubble";
 import FlowStepper from "@/components/FlowStepper";
-import GraphCanvas, { type NodePosition } from "@/components/GraphCanvas";
+import GraphCanvas, { type NodeHighlight, type NodePosition } from "@/components/GraphCanvas";
 import NodePanel from "@/components/NodePanel";
 import OutcomeCard from "@/components/OutcomeCard";
+import TokenGate from "@/components/TokenGate";
 import { STATIC_DEMO, triggerIncident } from "@/lib/api";
 import { describeOutcome } from "@/lib/outcome";
 import { useAnomalies } from "@/lib/useAnomalies";
@@ -28,7 +29,7 @@ export interface DemoStageProps {
 }
 
 export default function DemoStage({ variant = "app" }: DemoStageProps) {
-  const { nodes, edges, agents, findings, actions, loading, lastEvent, activity, connection } = useGraphSocket();
+  const { nodes, edges, agents, findings, actions, loading, lastEvent, activity, connection, authRequired } = useGraphSocket();
   const [positions, setPositions] = useState<Record<string, NodePosition>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -65,7 +66,7 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
 
   const { entries: resolvedEntries, dismiss } = useRecentlyResolved(actions);
   const highlights = useMemo(() => {
-    const map: Record<string, { tone: "success" | "rejected" | "error"; at: number }> = {};
+    const map: Record<string, NodeHighlight> = {};
     for (const entry of resolvedEntries) {
       map[entry.action.node_id] = { tone: describeOutcome(entry.action).tone, at: entry.at };
     }
@@ -100,7 +101,9 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
 
   const canvas = (
     <div className={styles.canvasArea} ref={areaRef}>
-      {loading ? (
+      {authRequired ? (
+        <TokenGate />
+      ) : loading ? (
         <div className={styles.status}>
           <div className={styles.statusInner}>
             <div className={styles.scan} aria-hidden="true">
@@ -222,6 +225,7 @@ export default function DemoStage({ variant = "app" }: DemoStageProps) {
         activity={activity ?? []}
         connection={connection ?? "live"}
         simulated={STATIC_DEMO}
+        locked={authRequired}
         resolved={resolvedEntries}
         onDismissResolved={dismiss}
       />

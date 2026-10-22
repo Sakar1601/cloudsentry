@@ -27,7 +27,7 @@ def test_get_graph_returns_current_store_state():
 
 
 def test_graph_stream_registers_and_unregisters_connection():
-    with client.websocket_connect("/graph/stream") as websocket:
+    with client.websocket_connect("/graph/stream"):
         assert len(connection_manager.connections) == 1
 
     assert len(connection_manager.connections) == 0

@@ -46,7 +46,7 @@ Many tools help you understand an AWS account; most leave the investigating and 
 
 - **The investigation happens on the map.** Agents travel to a resource; findings and proposals are pinned to it.
 - **The model cannot pull the trigger.** Action tools only record intent; one endpoint executes, behind a human click, and
-  the task role can only write to instances tagged for it.
+  the task role can only write to resources you have tagged.
 - **Cost, performance and security share one graph** of real relationships (VPC, env-var references, IAM access).
 - **Anomalies are relative, not hand-tuned:** more than 1.5× a resource's own rolling baseline.
 - **Every decision leaves evidence:** exact parameters, reasoning, outcome, including failures.
@@ -82,10 +82,20 @@ enforced in code and in IAM, not in a prompt:
 
 - Action tools are inert: they record intent and return a pending action.
 - Execution lives in one place (`POST /actions/{id}/approve`); approving twice returns `409`.
-- The Terraform task role limits writes to EC2 instances tagged `CloudsentryManaged=true`, and IAM edits exclude
-  roles ending in `-admin` or containing `-critical-`. This is demo-grade least privilege and
+- Every proposed action is validated twice, when it is proposed and again just before it runs
+  ([`backend/app/actions/validation.py`](backend/app/actions/validation.py)): instance ids and types must match strict
+  patterns, and an IAM policy that grants wildcard actions on `*` or any privilege-escalation action (`iam:PassRole`,
+  `iam:AttachRolePolicy`, `sts:AssumeRole`, ...) is refused. The model reads text from your account (tags, logs,
+  environment variables), so its output is treated as untrusted.
+- The Terraform task role writes only to resources you have tagged `CloudsentryManaged=true` (EC2 instances and IAM
+  roles: an allowlist, so anything you forgot to tag is safe by default), and an explicit deny stops the service from
+  ever editing its own role. This is demo-grade least privilege and
   [`infra/terraform/iam/main.tf`](infra/terraform/iam/main.tf) says so; production would add a permissions boundary.
+- The API refuses forged requests: any state-changing request or WebSocket whose `Origin` is not `FRONTEND_ORIGIN` is
+  rejected (cross-site request forgery), and setting `CLOUDSENTRY_API_TOKEN` requires a bearer token on every endpoint
+  except `/health`. **Set the token for anything reachable beyond your own machine.**
 - Every proposal keeps its agent, node, parameters, reasoning, status, timestamps and result.
+- The container runs as a non-root user, dependency audits run in CI, and Dependabot keeps packages patched.
 
 ## Architecture
 
@@ -152,7 +162,8 @@ Cost Explorer bills per request (about $0.01), so its result is cached for an ho
 | `CLOUDSENTRY_AGENT_INTERVAL` | 60 (10 in demo) | Seconds between agent investigations |
 | `CLOUDSENTRY_COST_TTL` | 3600 | Seconds to cache Cost Explorer results |
 | `CLOUDSENTRY_ACTIONS_DB` | `cloudsentry_actions.db` | SQLite path for pending actions and the audit log |
-| `FRONTEND_ORIGIN` | `http://localhost:3000` | CORS origin allowed to call the API |
+| `FRONTEND_ORIGIN` | `http://localhost:3000` | The only origin allowed to call the API (CORS and forged-request check) |
+| `CLOUDSENTRY_API_TOKEN` | unset | When set, every endpoint except `/health` requires `Authorization: Bearer <token>`; the UI prompts for it |
 | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Where the frontend finds the API |
 | `NEXT_PUBLIC_STATIC_DEMO` | off | Build the backend-less simulated demo |
 
@@ -161,9 +172,9 @@ Cost Explorer bills per request (about $0.01), so its result is cached for an ho
 ```
 backend/    FastAPI app. graph/ (poller, diff, edges, cost), agents/ (runner, selection, tools),
             actions/ (store, proposals, executor), tools/ (boto3 wrappers), demo/ (fixture account),
-            scripts/ (traffic generator), tests/ (121)
+            scripts/ (traffic generator), tests/ (169)
 frontend/   Next.js 16 + TypeScript. app/ (landing, /demo, /audit), components/ (graph canvas, sidebar,
-            approval cards, activity feed), lib/ (API seam, socket hook, in-browser demo engine), 28 tests
+            approval cards, activity feed), lib/ (API seam, socket hook, in-browser demo engine), 44 tests
 infra/      Terraform: iam/ (least-privilege task role), ecs/ (Fargate service); see infra/README.md
 docs/       spec.md (design), images/ (screenshots)
 .github/    CI (pytest, vitest, tsc, build, terraform validate) and the GitHub Pages deploy
@@ -171,7 +182,8 @@ docs/       spec.md (design), images/ (screenshots)
 
 ## Testing and CI
 
-`make test` runs pytest (121) and vitest (28). GitHub Actions also type-checks and builds the frontend and validates both
+`make test` runs pytest (169) and vitest (44). GitHub Actions also type-checks and builds the frontend, audits both
+dependency trees for known vulnerabilities, and validates both
 Terraform modules on every push, and deploys the static demo to GitHub Pages from `main`.
 
 ## Deployment notes

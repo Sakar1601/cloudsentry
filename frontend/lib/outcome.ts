@@ -1,6 +1,6 @@
 import type { PendingAction } from "./types";
 
-export type OutcomeTone = "success" | "rejected" | "error";
+type OutcomeTone = "success" | "rejected" | "error";
 
 export interface Outcome {
   tone: OutcomeTone;
@@ -14,7 +14,7 @@ const TOOL_LABELS: Record<string, string> = {
   tighten_iam_policy: "Tighten IAM policy",
 };
 
-export function toolLabel(tool: string): string {
+function toolLabel(tool: string): string {
   return TOOL_LABELS[tool] ?? tool;
 }
 

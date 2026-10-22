@@ -31,10 +31,13 @@ with `CLOUDSENTRY_DEMO=1`.
 - `lib/` — `api.ts` (backend seam), `useGraphSocket.ts` (state from REST + WebSocket), `demo/engine.ts` (simulator),
   `walkthrough.ts` (the five-step cycle copy shared by the stepper and the written flow)
 
+If the backend sets `CLOUDSENTRY_API_TOKEN`, the UI shows a token prompt on first load. The token is kept in
+`sessionStorage` for that browser session only and is never part of the build.
+
 ## Test and build
 
 ```bash
-npm test                 # vitest (28 tests)
+npm test                 # vitest (44 tests)
 npx tsc --noEmit
 npm run build            # production build for the real backend
 npm run build:demo       # static export to out/
@@ -43,5 +46,5 @@ npm run build:demo       # static export to out/
 ## Deployment
 
 - **Static demo:** GitHub Pages via `.github/workflows/pages.yml` (sets `NEXT_PUBLIC_BASE_PATH=/<repo>`).
-- **Real app:** Vercel (`vercel.json` pins the commands). Set `NEXT_PUBLIC_API_BASE_URL` to the deployed backend. The
+- **Real app:** Vercel (zero config). Set `NEXT_PUBLIC_API_BASE_URL` to the deployed backend. The
   backend's ECS service has no public endpoint yet; see `../infra/README.md`.

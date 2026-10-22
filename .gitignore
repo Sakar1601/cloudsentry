@@ -26,3 +26,6 @@ next-env.d.ts
 graphify-out/
 .claude/
 .pytest_cache/
+
+# design-tool context, local only
+PRODUCT.md

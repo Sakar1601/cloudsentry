@@ -2,7 +2,6 @@ import datetime
 from unittest.mock import patch
 
 from app.agents.tools import (
-    ACTION_TOOL_NAMES,
     COST_TOOL_NAMES,
     PERFORMANCE_TOOL_NAMES,
     SECURITY_TOOL_NAMES,
@@ -68,6 +67,9 @@ def test_cloudwatch_metric_tool_adapter_parses_iso_timestamps():
         stat="Average",
         client=None,
     )
+
+
+ACTION_TOOL_NAMES = ["stop_ec2_instance", "resize_ec2_instance", "tighten_iam_policy"]
 
 
 def test_action_tool_names_match_spec():

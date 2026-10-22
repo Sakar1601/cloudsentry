@@ -32,6 +32,11 @@ resource "aws_secretsmanager_secret" "anthropic_api_key" {
   description = "Anthropic API key for Cloudsentry's agent swarm. Terraform only creates this secret container — populate its value manually (e.g. `aws secretsmanager put-secret-value`), never via Terraform state or source control."
 }
 
+resource "aws_secretsmanager_secret" "api_token" {
+  name        = "cloudsentry/${var.environment_name}/api-token"
+  description = "Bearer token the API requires (CLOUDSENTRY_API_TOKEN). Terraform only creates the container: populate it manually with a long random value, e.g. `openssl rand -hex 32`."
+}
+
 resource "aws_iam_role_policy" "ecs_task_execution_read_secret" {
   name = "cloudsentry-read-anthropic-secret"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -40,9 +45,12 @@ resource "aws_iam_role_policy" "ecs_task_execution_read_secret" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
-        Resource = aws_secretsmanager_secret.anthropic_api_key.arn
+        Effect = "Allow"
+        Action = ["secretsmanager:GetSecretValue"]
+        Resource = [
+          aws_secretsmanager_secret.anthropic_api_key.arn,
+          aws_secretsmanager_secret.api_token.arn,
+        ]
       }
     ]
   })
@@ -71,6 +79,7 @@ resource "aws_ecs_task_definition" "backend" {
       name      = "backend"
       image     = var.container_image
       essential = true
+      user      = "10001"
       portMappings = [
         { containerPort = 8000, protocol = "tcp" }
       ]
@@ -81,6 +90,10 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name      = "ANTHROPIC_API_KEY"
           valueFrom = aws_secretsmanager_secret.anthropic_api_key.arn
+        },
+        {
+          name      = "CLOUDSENTRY_API_TOKEN"
+          valueFrom = aws_secretsmanager_secret.api_token.arn
         }
       ]
       logConfiguration = {

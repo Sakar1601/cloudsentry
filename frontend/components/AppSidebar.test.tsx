@@ -51,4 +51,11 @@ describe("AppSidebar", () => {
     expect(screen.getByText(/nothing runs until you approve it/i)).toBeInTheDocument();
     expect(screen.getByText(/disconnected/i)).toBeInTheDocument();
   });
+
+  it("says it is locked, not 'connecting', when the API needs a token", () => {
+    render(<AppSidebar nodes={{}} actions={{}} activity={[]} connection="connecting" locked />);
+
+    expect(screen.getByText(/Locked: enter the API token/)).toBeInTheDocument();
+    expect(screen.queryByText("Connecting…")).not.toBeInTheDocument();
+  });
 });

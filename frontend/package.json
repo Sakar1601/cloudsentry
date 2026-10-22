@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "build:demo": "NEXT_PUBLIC_STATIC_DEMO=1 next build"
+    "build:demo": "NEXT_PUBLIC_STATIC_DEMO=1 next build",
+    "lint:unused": "knip --no-progress"
   },
   "dependencies": {
     "next": "^16.3.5",
@@ -23,6 +24,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "jsdom": "^24.1.0",
+    "knip": "^6.42.1",
     "typescript": "^5.5.0",
     "vitest": "^5.0.0"
   }

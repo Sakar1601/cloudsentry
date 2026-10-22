@@ -17,7 +17,7 @@ Two ways to run it against a deployed backend:
 
 ## What Terraform manages
 
-- `infra/terraform/iam/` — the `cloudsentry-execution-role` (task role): least-privilege read access for the AWS Tool Layer and agent swarm, plus narrowly-scoped write access for the three action tools. See that module's `main.tf` for the exact permission set and reasoning.
+- `infra/terraform/iam/` — the `cloudsentry-execution-role` (task role): least-privilege read access for the AWS Tool Layer and agent swarm, plus write access for the three action tools, limited to resources you tag `CloudsentryManaged=true` (EC2 instances and IAM roles), with an explicit deny on the service's own role. Tag only what you are happy for an approved action to modify. See that module's `main.tf` for the exact permission set and reasoning.
 - `infra/terraform/ecs/` — the ECS Fargate cluster, task definition, service, CloudWatch log group, and the ECS task *execution* role (distinct from the task role above — see "Why ECS, not Lambda" below). Takes the IAM module's `execution_role_arn` output as an input variable (`cloudsentry_task_role_arn`); these are two separate Terraform working directories/state, not a combined root module, so chain them manually:
   ```bash
   cd infra/terraform/iam && terraform output execution_role_arn
@@ -37,6 +37,12 @@ These steps create real, billed AWS resources and are never run automatically �
 3. **`terraform plan`** in each directory, with real AWS credentials and the required variables supplied (`aws_region`, `container_image`, `cloudsentry_task_role_arn`, `vpc_id`, `subnet_ids`, etc.) — **review the plan output** before proceeding.
 4. **`terraform apply`** in `infra/terraform/iam/` first, then `infra/terraform/ecs/` (which depends on the IAM module's output).
 5. **Populate the Anthropic API key secret**: `aws secretsmanager put-secret-value --secret-id <the aws_secretsmanager_secret.anthropic_api_key ARN from the ecs module's output> --secret-string '<key>'` — the secret container is created by Terraform, but its value is deliberately never written into Terraform state or source control.
-6. **Deploy the frontend** — see `frontend/README.md`'s Deployment section.
+6. **Populate the API token secret**: `aws secretsmanager put-secret-value --secret-id <api_token_secret_arn output> --secret-string "$(openssl rand -hex 32)"`. The API requires this token on every request except `/health`; enter it in the UI when prompted. Put an ALB with TLS in front before exposing the service.
+7. **Deploy the frontend** — see `frontend/README.md`'s Deployment section.
 
-None of these six steps are performed by this plan's automated execution, under any circumstances.
+None of these seven steps are performed by this plan's automated execution, under any circumstances.
+
+## Known gaps
+
+- The audit log is SQLite on the task's ephemeral disk, so it is lost when the task is replaced. Mount an EFS volume at `/data` (or move the store to a managed database) before relying on it in ECS.
+- The service has no load balancer yet, so it is reachable only inside the VPC.

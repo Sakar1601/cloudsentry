@@ -22,12 +22,14 @@ export interface AppSidebarProps {
   activity: ActivityItem[];
   connection: ConnectionStatus;
   simulated?: boolean;
+  /** The API needs a token the operator has not entered yet. */
+  locked?: boolean;
   /** Actions resolved a moment ago, shown with what happened. */
   resolved?: ResolvedEntry[];
   onDismissResolved?: (id: string) => void;
 }
 
-export default function AppSidebar({ nodes, actions, activity, connection, simulated, resolved = [], onDismissResolved }: AppSidebarProps) {
+export default function AppSidebar({ nodes, actions, activity, connection, simulated, locked = false, resolved = [], onDismissResolved }: AppSidebarProps) {
   const now = useNow();
   const nodeList = Object.values(nodes);
   const pending = Object.values(actions).filter((a) => a.status === "pending");
@@ -36,8 +38,14 @@ export default function AppSidebar({ nodes, actions, activity, connection, simul
   return (
     <aside className={styles.sidebar} aria-label="Account overview">
       <div className={styles.status}>
-        <span className={`${styles.statusDot} ${styles[connection]}`} aria-hidden="true" />
-        <span>{simulated && connection === "live" ? "Live simulation" : STATUS_LABELS[connection]}</span>
+        <span className={`${styles.statusDot} ${locked ? styles.closed : styles[connection]}`} aria-hidden="true" />
+        <span>
+          {locked
+            ? "Locked: enter the API token"
+            : simulated && connection === "live"
+              ? "Live simulation"
+              : STATUS_LABELS[connection]}
+        </span>
       </div>
 
       <dl className={styles.summary}>
