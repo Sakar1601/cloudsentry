@@ -11,7 +11,7 @@
     "lint:unused": "knip --no-progress"
   },
   "dependencies": {
-    "next": "^16.3.5",
+    "next": "^16.4.5",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-force-graph-2d": "^1.25.0"
