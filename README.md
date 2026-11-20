@@ -2,7 +2,7 @@
 
 **Your AWS account as a live graph, watched by three AI agents.**
 
-[![CI](https://github.com/Sakar1601/cloudsentry/actions/workflows/ci.yml/badge.svg)](https://github.com/Sakar1601/cloudsentry/actions/workflows/ci.yml)
+[![CI](https://github.com/Sakar1601/cloudsentry/actions/workflows/ci.yml/badge.svg)](https://github.com/Sakar1601/cloudsentry/actions/workflows/ci.yml) [![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://sakar1601.github.io/cloudsentry/) ![License](https://img.shields.io/badge/license-MIT-blue)
 
 Cloudsentry reads a real AWS account (EC2, Lambda, DynamoDB, CloudWatch, Cost Explorer, IAM) and draws it as a
 force-directed graph. Three Claude-powered agents — **Cost**, **Performance** and **Security** — continuously pick a
@@ -204,3 +204,11 @@ use is assumed (no user accounts).
 
 Python · FastAPI · boto3 · Anthropic API (tool use) · SQLite · Next.js · React · TypeScript · react-force-graph ·
 Terraform · Docker · pytest · vitest · GitHub Actions
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for how to report a vulnerability. Never commit real credentials; use `.env.example` as the template for local configuration.
+
+## License
+
+Released under the [MIT License](LICENSE).
