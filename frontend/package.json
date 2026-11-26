@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "build:demo": "NEXT_PUBLIC_STATIC_DEMO=1 next build",
+    "build:demo": "NEXT_PUBLIC_STATIC_DEMO=1 next build && node scripts/inject-csp.mjs",
     "lint:unused": "knip --no-progress"
   },
   "dependencies": {
